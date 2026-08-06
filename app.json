@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Atlas",
+    "slug": "Atlas",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "workouttracker",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.user.workouttracker"
+    },
+    "android": {
+      "package": "dev.user.workouttracker"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

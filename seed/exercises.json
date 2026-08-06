@@ -1,0 +1,13 @@
+[
+  { "name": "Bench",          "category": "Chest",   "is_assisted": false },
+  { "name": "Fly",            "category": "Chest",   "is_assisted": false },
+  { "name": "Ab crunch",      "category": "Core",    "is_assisted": false },
+  { "name": "Paloff press",   "category": "Core",    "is_assisted": false },
+  { "name": "Face pull",      "category": "Back",    "is_assisted": false },
+  { "name": "Tri pulldown",   "category": "Arms",    "is_assisted": false },
+  { "name": "Bi",             "category": "Arms",    "is_assisted": false },
+  { "name": "Pulldown",       "category": "Back",    "is_assisted": false },
+  { "name": "Seated row",     "category": "Back",    "is_assisted": false },
+  { "name": "Assisted",       "category": "Bodyweight", "is_assisted": true  },
+  { "name": "Shoulder press", "category": "Shoulders","is_assisted": false }
+]
