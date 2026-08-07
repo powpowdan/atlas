@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Atlas",
-    "slug": "Atlas",
+    "slug": "atlas",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -20,6 +20,13 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "98f87982-cfdc-4dd0-baed-6e8849928b63"
+      }
+    },
+    "owner": "powpowdans-team"
   }
 }
