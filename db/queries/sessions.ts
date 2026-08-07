@@ -1,5 +1,5 @@
 import { SQLiteDatabase } from 'expo-sqlite';
-import { v4 as uuid } from 'uuid';
+import { uuid } from '../../utils/uuid';
 
 import type {
   Session,

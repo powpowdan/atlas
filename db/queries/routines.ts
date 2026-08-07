@@ -1,6 +1,7 @@
 import { SQLiteDatabase } from 'expo-sqlite';
-import { v4 as uuid } from 'uuid';
+import { uuid } from '../../utils/uuid';
 
+import { findExerciseByName } from './exercises';
 import type {
   Exercise,
   Routine,
