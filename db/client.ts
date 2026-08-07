@@ -2,6 +2,7 @@ import { SQLiteDatabase } from 'expo-sqlite';
 
 import { INDEX_DDLS, TABLE_DDLS } from './schema';
 import { seedExercisesIfEmpty } from './queries/exercises';
+import { seedRoutinesIfEmpty } from './queries/routines';
 
 const INITIAL_VERSION = 1;
 
@@ -51,4 +52,5 @@ export async function migrateDb(db: SQLiteDatabase): Promise<void> {
   }
 
   await seedExercisesIfEmpty(db);
+  await seedRoutinesIfEmpty(db);
 }

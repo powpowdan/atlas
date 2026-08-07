@@ -69,3 +69,12 @@ export interface BestLastResult {
   created_at: number;
   started_at?: number;
 }
+
+export interface LastSessionSet {
+  id: string;
+  weight: number;
+  reps: number;
+  is_warmup: boolean;
+  created_at: number;
+  started_at: number;
+}

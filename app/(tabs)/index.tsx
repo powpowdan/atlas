@@ -3,13 +3,14 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
-import { getActiveSession } from '../../db/queries/sessions';
+import { deleteSession, getActiveSession } from '../../db/queries/sessions';
 import { useActiveSessionStore } from '../../store/activeSession';
 import type { SessionListItem } from '../../db/queries/sessions';
 
@@ -18,6 +19,7 @@ export default function SessionsScreen() {
   const router = useRouter();
   const activeSessionId = useActiveSessionStore((s) => s.activeSessionId);
   const setActiveSession = useActiveSessionStore((s) => s.setActiveSession);
+  const clearActiveSession = useActiveSessionStore((s) => s.clearActiveSession);
   const setHydrated = useActiveSessionStore((s) => s.setHydrated);
   const hydrated = useActiveSessionStore((s) => s.hydrated);
 
@@ -40,6 +42,26 @@ export default function SessionsScreen() {
       refresh();
     }, [refresh]),
   );
+
+  function handleDiscard() {
+    if (!active) return;
+    Alert.alert(
+      'Discard session?',
+      'This deletes the in-progress session and all of its sets. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteSession(db, active.id);
+            if (activeSessionId === active.id) clearActiveSession();
+            refresh();
+          },
+        },
+      ],
+    );
+  }
 
   if (checking || !hydrated) {
     return (
@@ -66,6 +88,9 @@ export default function SessionsScreen() {
             onPress={() => router.push(`/session/${active.id}`)}
           >
             <Text style={styles.resumeBtnText}>Resume session</Text>
+          </Pressable>
+          <Pressable style={styles.discardLink} onPress={handleDiscard}>
+            <Text style={styles.discardLinkText}>Discard session</Text>
           </Pressable>
         </View>
       </View>
@@ -106,6 +131,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resumeBtnText: { color: '#fff', fontWeight: '600' },
+  discardLink: { marginTop: 8, padding: 8, alignItems: 'center' },
+  discardLinkText: { color: '#c00', fontWeight: '600' },
   startCard: { alignItems: 'center', marginTop: 24 },
   startTitle: { fontSize: 18, fontWeight: '600' },
   startHelp: { color: '#666', textAlign: 'center', marginTop: 4, marginBottom: 16 },

@@ -1,6 +1,6 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -18,6 +18,7 @@ import {
 import {
   addExerciseToSession,
   addSet,
+  deleteSession,
   deleteSet,
   getSession,
   markSessionComplete,
@@ -27,12 +28,23 @@ import {
 import { listExercises } from '../../db/queries/exercises';
 import { useExerciseBestLast } from '../../hooks/useExerciseBestLast';
 import { useActiveSessionStore } from '../../store/activeSession';
-import type { Exercise, SessionDetail, WorkoutSet } from '../../types';
+import type {
+  BestLastResult,
+  Exercise,
+  LastSessionSet,
+  SessionDetail,
+  WorkoutSet,
+} from '../../types';
+
+function formatWeight(n: number): string {
+  return String(n);
+}
 
 export default function SessionScreen() {
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const clearActiveSession = useActiveSessionStore((s) => s.clearActiveSession);
+  const activeSessionId = useActiveSessionStore((s) => s.activeSessionId);
 
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,6 +89,30 @@ export default function SessionScreen() {
     } else {
       router.replace('/(tabs)/history');
     }
+  }
+
+  function handleDiscard() {
+    if (!id) return;
+    Alert.alert(
+      'Discard session?',
+      'This deletes the session and all of its sets. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteSession(db, id);
+            if (activeSessionId === id) clearActiveSession();
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)/index');
+            }
+          },
+        },
+      ],
+    );
   }
 
   async function handleSaveNote() {
@@ -161,6 +197,9 @@ export default function SessionScreen() {
         <Pressable style={styles.completeBtn} onPress={handleComplete}>
           <Text style={styles.completeBtnText}>Complete session</Text>
         </Pressable>
+        <Pressable style={styles.discardBtn} onPress={handleDiscard}>
+          <Text style={styles.discardBtnText}>Discard session</Text>
+        </Pressable>
       </View>
 
       <Modal visible={noteModalOpen} animationType="slide" presentationStyle="pageSheet">
@@ -231,11 +270,29 @@ function ExerciseBlock({
   const [error, setError] = useState<string | null>(null);
   const [editingSet, setEditingSet] = useState<WorkoutSet | null>(null);
 
-  const { best, last } = useExerciseBestLast(
+  const weightRef = useRef<TextInput>(null);
+  const repsRef = useRef<TextInput>(null);
+
+  const { heaviest, mostReps, lastSets } = useExerciseBestLast(
     sessionExercise.exercise_id,
     sessionId,
     refreshKey,
   );
+
+  const hasHistory =
+    !!heaviest || !!mostReps || (lastSets?.length ?? 0) > 0;
+
+  // Carry-forward on mount: prefill from the most recent set in this session.
+  useEffect(() => {
+    const sets = sessionExercise.sets ?? [];
+    if (sets.length > 0) {
+      const last = sets[sets.length - 1];
+      setWeight(formatWeight(last.weight));
+      setReps(String(last.reps));
+    }
+    // mount-only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function saveSet() {
     const weightNum = parseFloat(weight);
@@ -257,6 +314,12 @@ function ExerciseBlock({
           is_warmup: isWarmup,
           note: note.trim() || null,
         });
+        // Return to an empty add form after an edit.
+        setWeight('');
+        setReps('');
+        setNote('');
+        setIsWarmup(false);
+        setEditingSet(null);
       } else {
         await addSet(db, {
           session_exercise_id: sessionExercise.id,
@@ -265,13 +328,13 @@ function ExerciseBlock({
           is_warmup: isWarmup,
           note: note.trim() || null,
         });
+        // Carry-forward: prefill the next set with the just-added values.
+        setWeight(formatWeight(weightNum));
+        setReps(String(repsNum));
+        setNote('');
+        setIsWarmup(false);
       }
-      setWeight('');
-      setReps('');
-      setNote('');
-      setIsWarmup(false);
       setError(null);
-      setEditingSet(null);
       onChanged();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save set');
@@ -280,7 +343,7 @@ function ExerciseBlock({
 
   function startEdit(s: WorkoutSet) {
     setEditingSet(s);
-    setWeight(String(s.weight));
+    setWeight(formatWeight(s.weight));
     setReps(String(s.reps));
     setIsWarmup(s.is_warmup);
     setNote(s.note ?? '');
@@ -297,7 +360,7 @@ function ExerciseBlock({
   async function removeSet(s: WorkoutSet) {
     Alert.alert(
       'Delete set?',
-      `${s.weight} × ${s.reps}`,
+      `${formatWeight(s.weight)} × ${s.reps}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -312,27 +375,52 @@ function ExerciseBlock({
     );
   }
 
+  function copyFromLast(set: LastSessionSet) {
+    setWeight(formatWeight(set.weight));
+    setReps(String(set.reps));
+    repsRef.current?.focus();
+  }
+
   return (
     <View style={styles.exerciseBlock}>
       <Text style={styles.exerciseName}>{sessionExercise.exercise?.name}</Text>
 
-      <View style={styles.bestLastRow}>
-        <BestLastPill label="Best" data={best} />
-        <BestLastPill label="Last" data={last} />
-      </View>
+      {hasHistory ? (
+        <>
+          <View style={styles.pillRow}>
+            <ContextPill label="Heaviest" data={heaviest} />
+            <ContextPill label="Most reps" data={mostReps} />
+          </View>
+          {(lastSets?.length ?? 0) > 0 ? (
+            <LastSessionList sets={lastSets} onCopy={copyFromLast} />
+          ) : null}
+        </>
+      ) : (
+        <View style={styles.firstTimeBox}>
+          <Text style={styles.firstTimeText}>
+            First time logging this exercise — set a baseline.
+          </Text>
+        </View>
+      )}
 
       <View style={styles.setEntryRow}>
         <TextInput
+          ref={weightRef}
           style={styles.setEntryInput}
           placeholder="Weight"
           keyboardType="numeric"
+          returnKeyType="next"
+          onSubmitEditing={() => repsRef.current?.focus()}
           value={weight}
           onChangeText={setWeight}
         />
         <TextInput
+          ref={repsRef}
           style={styles.setEntryInput}
           placeholder="Reps"
           keyboardType="numeric"
+          returnKeyType="done"
+          onSubmitEditing={() => saveSet()}
           value={reps}
           onChangeText={setReps}
         />
@@ -369,7 +457,7 @@ function ExerciseBlock({
           <View key={s.id} style={styles.setRow}>
             <Text style={styles.setRowIndex}>{idx + 1}.</Text>
             <Text style={styles.setRowMain}>
-              {s.weight} × {s.reps}
+              {formatWeight(s.weight)} × {s.reps}
               {s.is_warmup ? '  (warm)' : ''}
             </Text>
             {s.note ? <Text style={styles.setRowNote}>· {s.note}</Text> : null}
@@ -386,12 +474,12 @@ function ExerciseBlock({
   );
 }
 
-interface BestLastPillProps {
+interface ContextPillProps {
   label: string;
-  data: { weight: number; reps: number; created_at: number; started_at?: number } | null;
+  data: BestLastResult | null;
 }
 
-function BestLastPill({ label, data }: BestLastPillProps) {
+function ContextPill({ label, data }: ContextPillProps) {
   if (!data) {
     return (
       <View style={[styles.pill, styles.pillEmpty]}>
@@ -405,9 +493,45 @@ function BestLastPill({ label, data }: BestLastPillProps) {
     <View style={styles.pill}>
       <Text style={styles.pillLabel}>{label}</Text>
       <Text style={styles.pillValue}>
-        {data.weight} × {data.reps}
+        {formatWeight(data.weight)} × {data.reps}
       </Text>
       <Text style={styles.pillDate}>{date.toLocaleDateString()}</Text>
+    </View>
+  );
+}
+
+interface LastSessionListProps {
+  sets: LastSessionSet[];
+  onCopy: (set: LastSessionSet) => void;
+}
+
+function LastSessionList({ sets, onCopy }: LastSessionListProps) {
+  if (sets.length === 0) return null;
+  const date = new Date(sets[0].started_at).toLocaleDateString();
+  return (
+    <View style={styles.lastList}>
+      <Text style={styles.lastListHeader}>Last session — {date}</Text>
+      <View style={styles.lastListRows}>
+        {sets.map((s, idx) => (
+          <Pressable
+            key={s.id}
+            onPress={() => onCopy(s)}
+            style={({ pressed }) => [
+              styles.lastRow,
+              s.is_warmup && styles.lastRowWarm,
+              pressed && styles.lastRowPressed,
+            ]}
+          >
+            <Text style={[styles.lastRowIndex, s.is_warmup && styles.lastRowWarmText]}>
+              {idx + 1}.
+            </Text>
+            <Text style={[styles.lastRowMain, s.is_warmup && styles.lastRowWarmText]}>
+              {formatWeight(s.weight)} × {s.reps}
+              {s.is_warmup ? '  (warm)' : ''}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
@@ -445,10 +569,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f3f3',
   },
   exerciseName: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  bestLastRow: {
+  pillRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   pill: {
     flex: 1,
@@ -460,6 +584,45 @@ const styles = StyleSheet.create({
   pillLabel: { fontSize: 11, fontWeight: '700', color: '#666', textTransform: 'uppercase' },
   pillValue: { fontSize: 16, fontWeight: '600', marginTop: 2 },
   pillDate: { fontSize: 11, color: '#999', marginTop: 2 },
+  lastList: {
+    marginBottom: 12,
+    backgroundColor: '#fafcff',
+    borderRadius: 6,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#eef2f7',
+  },
+  lastListHeader: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#666',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  lastListRows: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  lastRow: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#e3e8ef',
+  },
+  lastRowWarm: { backgroundColor: '#fbfbfb', borderColor: '#eee' },
+  lastRowPressed: { backgroundColor: '#e8f0ff', borderColor: '#0a7cff' },
+  lastRowIndex: { width: 18, color: '#999', fontSize: 14 },
+  lastRowMain: { fontSize: 14, fontWeight: '500' },
+  lastRowWarmText: { color: '#aaa' },
+  firstTimeBox: {
+    backgroundColor: '#fff8e6',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#f0e3c2',
+  },
+  firstTimeText: { color: '#8a6d1c', fontSize: 13 },
   setEntryRow: {
     flexDirection: 'row',
     gap: 8,
@@ -538,6 +701,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   completeBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  discardBtn: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  discardBtnText: { color: '#c00', fontWeight: '600' },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',

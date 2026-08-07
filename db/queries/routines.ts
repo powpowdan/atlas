@@ -173,3 +173,42 @@ export async function deleteRoutine(
 ): Promise<void> {
   await db.runAsync(`DELETE FROM routines WHERE id = ?;`, id);
 }
+
+const SEED_ROUTINES: { name: string; exercises: string[] }[] = [
+  {
+    name: 'Day 1',
+    exercises: ['Bench', 'Fly', 'Ab crunch', 'Paloff press', 'Face pull', 'Tri pulldown', 'Bi'],
+  },
+  {
+    name: 'Day 2',
+    exercises: ['Pulldown', 'Seated row', 'Assisted', 'Shoulder press'],
+  },
+];
+
+export async function seedRoutinesIfEmpty(db: SQLiteDatabase): Promise<void> {
+  const countRow = await db.getFirstAsync<{ c: number }>(
+    `SELECT COUNT(*) AS c FROM routines;`,
+  );
+  if ((countRow?.c ?? 0) > 0) return;
+
+  for (const r of SEED_ROUTINES) {
+    const exerciseIds: string[] = [];
+    for (const name of r.exercises) {
+      const ex = await findExerciseByName(db, name);
+      if (!ex) {
+        console.warn(
+          `[seed] exercise "${name}" not found while seeding routine "${r.name}"`,
+        );
+        continue;
+      }
+      exerciseIds.push(ex.id);
+    }
+    if (exerciseIds.length === 0) {
+      console.warn(
+        `[seed] routine "${r.name}" resolved no exercises, skipping`,
+      );
+      continue;
+    }
+    await createRoutine(db, { name: r.name, exerciseIds });
+  }
+}

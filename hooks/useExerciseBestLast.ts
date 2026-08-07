@@ -1,34 +1,40 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 
-import { getBestSet, getLastSet } from '../db/queries/tracking';
-import type { BestLastResult } from '../types';
+import { getBestSet, getLastSessionSets, getMostRepsSet } from '../db/queries/tracking';
+import type { BestLastResult, LastSessionSet } from '../types';
 
-interface BestLast {
-  best: BestLastResult | null;
-  last: BestLastResult | null;
+interface ExerciseContext {
+  heaviest: BestLastResult | null;
+  mostReps: BestLastResult | null;
+  lastSets: LastSessionSet[];
 }
 
 export function useExerciseBestLast(
   exerciseId: string | undefined,
   currentSessionId: string | null,
   refreshKey: number,
-): BestLast {
+): ExerciseContext {
   const db = useSQLiteContext();
-  const [state, setState] = useState<BestLast>({ best: null, last: null });
+  const [state, setState] = useState<ExerciseContext>({
+    heaviest: null,
+    mostReps: null,
+    lastSets: [],
+  });
 
   useEffect(() => {
     let cancelled = false;
     if (!exerciseId) {
-      setState({ best: null, last: null });
+      setState({ heaviest: null, mostReps: null, lastSets: [] });
       return;
     }
     (async () => {
-      const [best, last] = await Promise.all([
+      const [heaviest, mostReps, lastSets] = await Promise.all([
         getBestSet(db, exerciseId),
-        getLastSet(db, exerciseId, currentSessionId),
+        getMostRepsSet(db, exerciseId),
+        getLastSessionSets(db, exerciseId, currentSessionId),
       ]);
-      if (!cancelled) setState({ best, last });
+      if (!cancelled) setState({ heaviest, mostReps, lastSets });
     })();
     return () => {
       cancelled = true;

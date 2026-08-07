@@ -276,6 +276,10 @@ export async function markSessionComplete(
   );
 }
 
+export async function deleteSession(db: SQLiteDatabase, id: string): Promise<void> {
+  await db.runAsync(`DELETE FROM sessions WHERE id = ?;`, id);
+}
+
 export async function setSessionNote(
   db: SQLiteDatabase,
   id: string,
