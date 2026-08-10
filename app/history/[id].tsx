@@ -1,5 +1,5 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -27,6 +27,7 @@ function formatDuration(ms: number): string {
 export default function HistoryDetailScreen() {
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [noteModalOpen, setNoteModalOpen] = useState(false);
@@ -40,9 +41,14 @@ export default function HistoryDetailScreen() {
       }
       const detail = await getSession(db, id);
       setSession(detail);
+      if (detail) {
+        navigation.setOptions({
+          title: detail.routine_name ?? 'Past session',
+        });
+      }
       setLoading(false);
     })();
-  }, [db, id]);
+  }, [db, id, navigation]);
 
   function handleDelete() {
     if (!id || !session) return;

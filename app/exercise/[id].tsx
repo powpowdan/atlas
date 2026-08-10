@@ -1,5 +1,5 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -35,6 +35,7 @@ const SET_TYPES: Array<{ key: SetTypeFilter; label: string }> = [
 export default function ExerciseProgressionScreen() {
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
 
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +53,7 @@ export default function ExerciseProgressionScreen() {
     }
     const ex = await getExerciseById(db, id);
     setExercise(ex);
+    if (ex) navigation.setOptions({ title: ex.name });
     if (!ex) {
       setLoading(false);
       return;
@@ -67,7 +69,7 @@ export default function ExerciseProgressionScreen() {
     setBestE1rm(e);
     setPoints(pts);
     setLoading(false);
-  }, [db, id, setType]);
+  }, [db, id, setType, navigation]);
 
   useEffect(() => {
     load();

@@ -1,6 +1,6 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { router, useNavigation } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -26,6 +26,7 @@ interface Props {
 
 export default function RoutineEditor({ routineId }: Props) {
   const db = useSQLiteContext();
+  const navigation = useNavigation();
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [selectedDetails, setSelectedDetails] = useState<Exercise[]>([]);
@@ -47,11 +48,12 @@ export default function RoutineEditor({ routineId }: Props) {
               .map((re) => re.exercise)
               .filter((e): e is Exercise => Boolean(e)),
           );
+          navigation.setOptions({ title: existing.name });
         }
       }
       setLoading(false);
     })();
-  }, [routineId, db]);
+  }, [routineId, db, navigation]);
 
   async function handleSave() {
     const trimmed = name.trim();

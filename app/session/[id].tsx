@@ -1,5 +1,5 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -42,6 +42,7 @@ function formatWeight(n: number): string {
 export default function SessionScreen() {
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
   const clearActiveSession = useActiveSessionStore((s) => s.clearActiveSession);
   const activeSessionId = useActiveSessionStore((s) => s.activeSessionId);
 
@@ -56,10 +57,13 @@ export default function SessionScreen() {
     if (!id) return;
     const detail = await getSession(db, id);
     setSession(detail);
+    if (detail) {
+      navigation.setOptions({ title: detail.routine_name ?? 'Session' });
+    }
     setSessionNoteDraft(detail?.note ?? '');
     setLoading(false);
     setRefreshKey((k) => k + 1);
-  }, [db, id]);
+  }, [db, id, navigation]);
 
   useEffect(() => {
     refresh();

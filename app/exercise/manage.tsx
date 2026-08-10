@@ -1,4 +1,5 @@
 import { useSQLiteContext } from 'expo-sqlite';
+import { useNavigation } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -36,10 +37,15 @@ interface Section {
 
 export default function ManageExercisesScreen() {
   const db = useSQLiteContext();
+  const navigation = useNavigation();
   const [active, setActive] = useState<Exercise[]>([]);
   const [archived, setArchived] = useState<Exercise[]>([]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Exercise | undefined>(undefined);
+
+  useEffect(() => {
+    navigation.setOptions({ title: 'Manage exercises' });
+  }, []);
 
   const refresh = useCallback(async () => {
     const rows = await listExercises(db, { includeArchived: true });
