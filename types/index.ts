@@ -78,3 +78,16 @@ export interface LastSessionSet {
   created_at: number;
   started_at: number;
 }
+
+export type SetTypeFilter = 'working' | 'all' | 'warmup';
+
+export type ProgressionMetric = 'e1rm' | 'weight' | 'reps' | 'volume';
+
+export interface ProgressionPoint {
+  sessionId: string;
+  startedAt: number;
+  bestWeight: number;
+  bestReps: number;
+  bestE1rm: number;
+  volume: number;
+}

@@ -383,7 +383,9 @@ function ExerciseBlock({
 
   return (
     <View style={styles.exerciseBlock}>
-      <Text style={styles.exerciseName}>{sessionExercise.exercise?.name}</Text>
+      <Pressable onPress={() => router.push(`/exercise/${sessionExercise.exercise_id}`)}>
+        <Text style={styles.exerciseName}>{sessionExercise.exercise?.name}</Text>
+      </Pressable>
 
       {hasHistory ? (
         <>

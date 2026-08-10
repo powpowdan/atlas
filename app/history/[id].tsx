@@ -5,7 +5,6 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import { deleteSession, getSession } from '../../db/queries/sessions';
 import type { SessionDetail } from '../../types';
-
 export default function HistoryDetailScreen() {
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -88,7 +87,9 @@ export default function HistoryDetailScreen() {
       ) : null}
       {session.exercises.map((ex) => (
         <View key={ex.id} style={styles.exerciseBlock}>
-          <Text style={styles.exerciseName}>{ex.exercise?.name}</Text>
+          <Pressable onPress={() => router.push(`/exercise/${ex.exercise_id}`)}>
+            <Text style={styles.exerciseName}>{ex.exercise?.name}</Text>
+          </Pressable>
           {(ex.sets ?? []).length === 0 ? (
             <Text style={styles.empty}>No sets logged.</Text>
           ) : (
