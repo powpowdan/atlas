@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -18,7 +17,7 @@ import {
   getRoutine,
   updateRoutine,
 } from '../db/queries/routines';
-import { listExercises } from '../db/queries/exercises';
+import { ExercisePickerModal } from './ExercisePickerModal';
 import type { Exercise } from '../types';
 
 interface Props {
@@ -29,31 +28,30 @@ export default function RoutineEditor({ routineId }: Props) {
   const db = useSQLiteContext();
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
-  const [library, setLibrary] = useState<Exercise[]>([]);
+  const [selectedDetails, setSelectedDetails] = useState<Exercise[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isEdit = Boolean(routineId);
 
-  const refreshLibrary = useCallback(async () => {
-    const rows = await listExercises(db);
-    setLibrary(rows);
-  }, [db]);
-
   useEffect(() => {
     (async () => {
-      await refreshLibrary();
       if (routineId) {
         const existing = await getRoutine(db, routineId);
         if (existing) {
           setName(existing.name);
           setSelected(existing.exercises.map((re) => re.exercise_id));
+          setSelectedDetails(
+            existing.exercises
+              .map((re) => re.exercise)
+              .filter((e): e is Exercise => Boolean(e)),
+          );
         }
       }
       setLoading(false);
     })();
-  }, [routineId, db, refreshLibrary]);
+  }, [routineId, db]);
 
   async function handleSave() {
     const trimmed = name.trim();
@@ -99,13 +97,14 @@ export default function RoutineEditor({ routineId }: Props) {
     setSelected((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function togglePick(id: string) {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+  function handlePickerSelect(exercise: Exercise) {
+    setSelected((prev) => [...prev, exercise.id]);
+    setSelectedDetails((prev) =>
+      prev.some((e) => e.id === exercise.id) ? prev : [...prev, exercise],
     );
   }
 
-  const exerciseNameById = new Map(library.map((e) => [e.id, e.name]));
+  const exerciseNameById = new Map(selectedDetails.map((e) => [e.id, e.name]));
 
   if (loading) {
     return (
@@ -137,10 +136,7 @@ export default function RoutineEditor({ routineId }: Props) {
         </Text>
         <Pressable
           style={styles.addBtn}
-          onPress={() => {
-            setPickerOpen(true);
-            refreshLibrary();
-          }}
+          onPress={() => setPickerOpen(true)}
         >
           <Text style={styles.addBtnText}>+ Add</Text>
         </Pressable>
@@ -182,37 +178,13 @@ export default function RoutineEditor({ routineId }: Props) {
         </Pressable>
       </View>
 
-      <Modal visible={pickerOpen} animationType="slide" presentationStyle="pageSheet">
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Pick exercises</Text>
-          <Pressable onPress={() => setPickerOpen(false)}>
-            <Text style={styles.modalDone}>Done</Text>
-          </Pressable>
-        </View>
-        <FlatList
-          data={library}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-            const picked = selected.includes(item.id);
-            return (
-              <Pressable
-                style={[styles.pickerItem, picked && styles.pickerItemPicked]}
-                onPress={() => togglePick(item.id)}
-              >
-                <Text style={styles.pickerItemName}>{item.name}</Text>
-                <Text style={styles.pickerItemMeta}>
-                  {item.category ?? '—'}
-                  {item.is_assisted ? ' · assisted' : ''}
-                </Text>
-                <Text style={styles.pickerCheck}>{picked ? '✓' : ''}</Text>
-              </Pressable>
-            );
-          }}
-          ListEmptyComponent={
-            <Text style={styles.empty}>No exercises in library.</Text>
-          }
-        />
-      </Modal>
+      <ExercisePickerModal
+        visible={pickerOpen}
+        excludeIds={selected}
+        autoCloseOnSelect={false}
+        onSelect={handlePickerSelect}
+        onClose={() => setPickerOpen(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -267,30 +239,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  modalTitle: { fontWeight: '600', fontSize: 16 },
-  modalDone: { color: '#0a7cff', fontWeight: '600' },
-  pickerItem: {
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  pickerItemPicked: { backgroundColor: '#f0f7ff' },
-  pickerItemName: { fontSize: 16, fontWeight: '500' },
-  pickerItemMeta: {
-    color: '#666',
-    fontSize: 13,
-    marginLeft: 8,
-    flex: 1,
-  },
-  pickerCheck: { color: '#0a7cff', fontWeight: '700', fontSize: 18 },
 });

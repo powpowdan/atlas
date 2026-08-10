@@ -3,7 +3,23 @@ export interface Exercise {
   name: string;
   category: string | null;
   is_assisted: boolean;
+  archived_at: number | null;
   created_at: number;
+}
+
+export interface ExerciseInput {
+  name: string;
+  category: string | null;
+  is_assisted: boolean;
+}
+
+export type ExerciseUpdate = ExerciseInput;
+
+export class DuplicateExerciseError extends Error {
+  constructor(public exerciseName: string) {
+    super(`An exercise with the name "${exerciseName}" already exists.`);
+    this.name = 'DuplicateExerciseError';
+  }
 }
 
 export interface Routine {

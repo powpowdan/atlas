@@ -25,12 +25,11 @@ import {
   setSessionNote,
   updateSet,
 } from '../../db/queries/sessions';
-import { listExercises } from '../../db/queries/exercises';
+import { ExercisePickerModal } from '../../components/ExercisePickerModal';
 import { useExerciseBestLast } from '../../hooks/useExerciseBestLast';
 import { useActiveSessionStore } from '../../store/activeSession';
 import type {
   BestLastResult,
-  Exercise,
   LastSessionSet,
   SessionDetail,
   WorkoutSet,
@@ -51,7 +50,6 @@ export default function SessionScreen() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [addExerciseOpen, setAddExerciseOpen] = useState(false);
-  const [library, setLibrary] = useState<Exercise[]>([]);
   const [sessionNoteDraft, setSessionNoteDraft] = useState('');
 
   const refresh = useCallback(async () => {
@@ -67,16 +65,9 @@ export default function SessionScreen() {
     refresh();
   }, [refresh]);
 
-  useEffect(() => {
-    if (addExerciseOpen) {
-      listExercises(db).then(setLibrary);
-    }
-  }, [db, addExerciseOpen]);
-
   async function handleAddExercise(exerciseId: string) {
     if (!id) return;
     await addExerciseToSession(db, id, exerciseId);
-    setAddExerciseOpen(false);
     refresh();
   }
 
@@ -221,30 +212,11 @@ export default function SessionScreen() {
         </View>
       </Modal>
 
-      <Modal visible={addExerciseOpen} animationType="slide" presentationStyle="pageSheet">
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Add exercise</Text>
-          <Pressable onPress={() => setAddExerciseOpen(false)}>
-            <Text style={styles.modalDone}>Cancel</Text>
-          </Pressable>
-        </View>
-        <FlatList
-          data={library}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.pickerItem}
-              onPress={() => handleAddExercise(item.id)}
-            >
-              <Text style={styles.pickerItemName}>{item.name}</Text>
-              <Text style={styles.pickerItemMeta}>
-                {item.category ?? '—'}
-                {item.is_assisted ? ' · assisted' : ''}
-              </Text>
-            </Pressable>
-          )}
-        />
-      </Modal>
+      <ExercisePickerModal
+        visible={addExerciseOpen}
+        onSelect={(ex) => handleAddExercise(ex.id)}
+        onClose={() => setAddExerciseOpen(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -720,11 +692,4 @@ const styles = StyleSheet.create({
   },
   modalTitle: { fontWeight: '600', fontSize: 16 },
   modalDone: { color: '#0a7cff', fontWeight: '600' },
-  pickerItem: {
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  pickerItemName: { fontSize: 16, fontWeight: '500' },
-  pickerItemMeta: { color: '#666', fontSize: 13, marginTop: 2 },
 });

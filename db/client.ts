@@ -5,6 +5,7 @@ import { seedExercisesIfEmpty } from './queries/exercises';
 import { seedRoutinesIfEmpty } from './queries/routines';
 
 const INITIAL_VERSION = 1;
+const MIGRATION_V2 = 2;
 
 async function ensureSchemaVersionTable(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
@@ -49,6 +50,14 @@ export async function migrateDb(db: SQLiteDatabase): Promise<void> {
       ...INDEX_DDLS.map((i) => i.sql),
     ];
     await applyMigration(db, INITIAL_VERSION, initialStatements);
+  }
+
+  // v2: soft-delete support for exercises. Pure-additive — existing rows get
+  // NULL (treated as "active"). Safe on any prior v1 install.
+  if (!applied.has(MIGRATION_V2)) {
+    await applyMigration(db, MIGRATION_V2, [
+      `ALTER TABLE exercises ADD COLUMN archived_at INTEGER NULL;`,
+    ]);
   }
 
   await seedExercisesIfEmpty(db);

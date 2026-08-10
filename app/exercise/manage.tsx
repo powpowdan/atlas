@@ -1,95 +1,159 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  FlatList,
+  Alert,
+  Platform,
   Pressable,
+  SectionList,
   StyleSheet,
-  Switch,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
-import { createExercise, listExercises } from '../../db/queries/exercises';
+import {
+  archiveExercise,
+  listExercises,
+  restoreExercise,
+} from '../../db/queries/exercises';
+import { ExerciseEditorModal } from '../../components/ExerciseEditorModal';
 import type { Exercise } from '../../types';
+
+function confirmDiscard(message: string, onConfirm: () => void) {
+  if (Platform.OS === 'web') {
+    if (window.confirm(message)) onConfirm();
+  } else {
+    Alert.alert(message, undefined, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', style: 'destructive', onPress: onConfirm },
+    ]);
+  }
+}
+
+interface Section {
+  title: string;
+  data: Exercise[];
+}
 
 export default function ManageExercisesScreen() {
   const db = useSQLiteContext();
-  const [items, setItems] = useState<Exercise[]>([]);
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [isAssisted, setIsAssisted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [active, setActive] = useState<Exercise[]>([]);
+  const [archived, setArchived] = useState<Exercise[]>([]);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<Exercise | undefined>(undefined);
 
-  async function refresh() {
-    const rows = await listExercises(db);
-    setItems(rows);
-  }
+  const refresh = useCallback(async () => {
+    const rows = await listExercises(db, { includeArchived: true });
+    setActive(rows.filter((e) => e.archived_at === null));
+    setArchived(rows.filter((e) => e.archived_at !== null));
+  }, [db]);
 
   useEffect(() => {
     refresh();
-  }, [db]);
+  }, [refresh]);
 
-  async function handleAdd() {
-    const trimmed = name.trim();
-    if (!trimmed) {
-      setError('Name is required');
-      return;
-    }
-    try {
-      await createExercise(db, {
-        name: trimmed,
-        category: category.trim() || null,
-        is_assisted: isAssisted,
-      });
-      setName('');
-      setCategory('');
-      setIsAssisted(false);
-      setError(null);
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to add exercise');
-    }
+  function openCreate() {
+    setEditing(undefined);
+    setEditorOpen(true);
   }
+
+  function openEdit(ex: Exercise) {
+    setEditing(ex);
+    setEditorOpen(true);
+  }
+
+  function handleSaved() {
+    setEditorOpen(false);
+    setEditing(undefined);
+    refresh();
+  }
+
+  function handleArchive(ex: Exercise) {
+    confirmDiscard(`Archive "${ex.name}"? It will be hidden from pickers but kept in your history.`, async () => {
+      await archiveExercise(db, ex.id);
+      refresh();
+    });
+  }
+
+  async function handleRestore(ex: Exercise) {
+    await restoreExercise(db, ex.id);
+    refresh();
+  }
+
+  const sections: Section[] = [];
+  if (active.length > 0) sections.push({ title: 'Active', data: active });
+  if (archived.length > 0) sections.push({ title: 'Archived', data: archived });
 
   return (
     <View style={styles.container}>
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Exercise name"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Category (optional)"
-          value={category}
-          onChangeText={setCategory}
-        />
-        <View style={styles.row}>
-          <Text>Assisted</Text>
-          <Switch value={isAssisted} onValueChange={setIsAssisted} />
-        </View>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable style={styles.button} onPress={handleAdd}>
-          <Text style={styles.buttonText}>Add exercise</Text>
+      <View style={styles.toolbar}>
+        <Pressable style={styles.addBtn} onPress={openCreate}>
+          <Text style={styles.addBtnText}>+ New exercise</Text>
         </Pressable>
       </View>
-      <FlatList
+      <SectionList
         style={styles.list}
-        data={items}
+        sections={sections}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.listItem}>
-            <Text style={styles.listItemName}>{item.name}</Text>
-            <Text style={styles.listItemMeta}>
-              {item.category ?? '—'}
-              {item.is_assisted ? ' · assisted' : ''}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              {section.title} ({section.data.length})
             </Text>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No exercises yet</Text>}
+        renderItem={({ item, section }) => (
+          <View
+            style={[
+              styles.listItem,
+              item.archived_at !== null && styles.listItemArchived,
+            ]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.listItemName}>{item.name}</Text>
+              <Text style={styles.listItemMeta}>
+                {item.category ?? '—'}
+                {item.is_assisted ? ' · assisted' : ''}
+              </Text>
+            </View>
+            {section.title === 'Active' ? (
+              <View style={styles.actions}>
+                <Pressable
+                  style={styles.actionBtn}
+                  onPress={() => openEdit(item)}
+                >
+                  <Text style={styles.actionEditText}>Edit</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.actionBtn}
+                  onPress={() => handleArchive(item)}
+                >
+                  <Text style={styles.actionArchiveText}>Archive</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.actions}>
+                <Pressable
+                  style={styles.actionBtn}
+                  onPress={() => handleRestore(item)}
+                >
+                  <Text style={styles.actionRestoreText}>Restore</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        )}
+        ListEmptyComponent={
+          <Text style={styles.empty}>No exercises yet. Tap "+ New exercise" above.</Text>
+        }
+      />
+      <ExerciseEditorModal
+        visible={editorOpen}
+        exercise={editing}
+        onSaved={handleSaved}
+        onClose={() => {
+          setEditorOpen(false);
+          setEditing(undefined);
+        }}
       />
     </View>
   );
@@ -97,31 +161,43 @@ export default function ManageExercisesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  form: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    padding: 10,
-    marginBottom: 8,
+  toolbar: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    alignItems: 'flex-end',
   },
-  row: {
+  addBtn: {
+    backgroundColor: '#0a7cff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  addBtnText: { color: '#fff', fontWeight: '600' },
+  list: { flex: 1 },
+  sectionHeader: {
+    backgroundColor: '#f7f7f7',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#666', letterSpacing: 0.5 },
+  listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  error: { color: '#c00', marginBottom: 8 },
-  button: {
-    backgroundColor: '#0a7cff',
     padding: 12,
-    borderRadius: 6,
-    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    gap: 8,
   },
-  buttonText: { color: '#fff', fontWeight: '600' },
-  list: { flex: 1 },
-  listItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  listItemArchived: { opacity: 0.6 },
   listItemName: { fontSize: 16, fontWeight: '500' },
   listItemMeta: { color: '#666', fontSize: 13, marginTop: 2 },
+  actions: { flexDirection: 'row', gap: 8 },
+  actionBtn: { paddingHorizontal: 10, paddingVertical: 6 },
+  actionEditText: { color: '#0a7cff', fontWeight: '600', fontSize: 13 },
+  actionArchiveText: { color: '#c00', fontWeight: '600', fontSize: 13 },
+  actionRestoreText: { color: '#0a7cff', fontWeight: '600', fontSize: 13 },
   empty: { padding: 24, textAlign: 'center', color: '#999' },
 });

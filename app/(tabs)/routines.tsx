@@ -53,12 +53,6 @@ export default function RoutinesScreen() {
             >
               <Text style={styles.buttonText}>Create your first routine</Text>
             </Pressable>
-            <Pressable
-              style={styles.link}
-              onPress={() => router.push('/exercise/manage')}
-            >
-              <Text style={styles.linkText}>Manage exercises</Text>
-            </Pressable>
           </View>
         }
       />
@@ -92,8 +86,6 @@ const styles = StyleSheet.create({
     minWidth: 200,
   },
   buttonText: { color: '#fff', fontWeight: '600' },
-  link: { marginTop: 12 },
-  linkText: { color: '#0a7cff' },
   fab: {
     position: 'absolute',
     right: 16,

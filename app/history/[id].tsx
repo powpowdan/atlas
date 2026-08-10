@@ -1,15 +1,36 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
-import { deleteSession, getSession } from '../../db/queries/sessions';
+import { deleteSession, getSession, setSessionNote } from '../../db/queries/sessions';
 import type { SessionDetail } from '../../types';
+
+function formatDuration(ms: number): string {
+  const totalMin = Math.max(0, Math.round(ms / 60000));
+  if (totalMin < 60) return `${totalMin}m`;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
 export default function HistoryDetailScreen() {
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -46,6 +67,24 @@ export default function HistoryDetailScreen() {
     );
   }
 
+  async function reload() {
+    if (!id) return;
+    const detail = await getSession(db, id);
+    setSession(detail);
+  }
+
+  function openNoteEditor() {
+    setNoteDraft(session?.note ?? '');
+    setNoteModalOpen(true);
+  }
+
+  async function handleSaveNote() {
+    if (!id) return;
+    await setSessionNote(db, id, noteDraft.trim() || null);
+    setNoteModalOpen(false);
+    reload();
+  }
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -62,6 +101,10 @@ export default function HistoryDetailScreen() {
     );
   }
 
+  const durationMs = session.completed_at
+    ? session.completed_at - session.started_at
+    : null;
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -74,17 +117,25 @@ export default function HistoryDetailScreen() {
             {session.completed_at
               ? ` · completed ${new Date(session.completed_at).toLocaleDateString()}`
               : ''}
+            {durationMs !== null ? ` · ${formatDuration(durationMs)}` : ''}
           </Text>
         </View>
         <Pressable style={styles.deleteBtn} onPress={handleDelete}>
           <Text style={styles.deleteBtnText}>Delete</Text>
         </Pressable>
       </View>
-      {session.note ? (
-        <View style={styles.noteBox}>
-          <Text style={styles.noteText}>{session.note}</Text>
-        </View>
-      ) : null}
+      <View style={styles.noteWrap}>
+        {session.note ? (
+          <Pressable style={styles.noteBox} onPress={openNoteEditor}>
+            <Text style={styles.noteText}>{session.note}</Text>
+            <Text style={styles.noteEditHint}>Tap to edit</Text>
+          </Pressable>
+        ) : (
+          <Pressable style={styles.noteAddLink} onPress={openNoteEditor}>
+            <Text style={styles.noteAddLinkText}>+ Add note</Text>
+          </Pressable>
+        )}
+      </View>
       {session.exercises.map((ex) => (
         <View key={ex.id} style={styles.exerciseBlock}>
           <Pressable onPress={() => router.push(`/exercise/${ex.exercise_id}`)}>
@@ -108,6 +159,33 @@ export default function HistoryDetailScreen() {
           )}
         </View>
       ))}
+
+      <Modal
+        visible={noteModalOpen}
+        animationType="slide"
+        presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'overFullScreen'}
+        onRequestClose={() => setNoteModalOpen(false)}
+      >
+        <View style={styles.modalHeader}>
+          <Pressable onPress={() => setNoteModalOpen(false)}>
+            <Text style={styles.modalCancel}>Cancel</Text>
+          </Pressable>
+          <Text style={styles.modalTitle}>Session note</Text>
+          <Pressable onPress={handleSaveNote}>
+            <Text style={styles.modalDone}>Save</Text>
+          </Pressable>
+        </View>
+        <View style={{ padding: 16, flex: 1 }}>
+          <TextInput
+            style={styles.noteInput}
+            placeholder="How did the session feel?"
+            value={noteDraft}
+            onChangeText={setNoteDraft}
+            multiline
+            autoFocus
+          />
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -131,14 +209,21 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   deleteBtnText: { color: '#c00', fontWeight: '600' },
+  noteWrap: { marginHorizontal: 16, marginTop: 12 },
   noteBox: {
     backgroundColor: '#fafafa',
-    marginHorizontal: 16,
-    marginTop: 12,
     padding: 12,
     borderRadius: 6,
   },
   noteText: { fontStyle: 'italic', color: '#555' },
+  noteEditHint: {
+    color: '#0a7cff',
+    fontSize: 11,
+    marginTop: 6,
+    textAlign: 'right',
+  },
+  noteAddLink: { paddingVertical: 6 },
+  noteAddLinkText: { color: '#0a7cff', fontWeight: '500' },
   exerciseBlock: {
     padding: 16,
     borderBottomWidth: 8,
@@ -155,4 +240,23 @@ const styles = StyleSheet.create({
   setRowMain: { fontSize: 16, fontWeight: '500' },
   setRowNote: { flex: 1, color: '#666', fontSize: 13 },
   empty: { padding: 12, color: '#999', textAlign: 'center' },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: { fontSize: 16, fontWeight: '600' },
+  modalCancel: { color: '#555', fontSize: 16 },
+  modalDone: { color: '#0a7cff', fontWeight: '600', fontSize: 16 },
+  noteInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    padding: 10,
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
 });
