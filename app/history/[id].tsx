@@ -14,16 +14,8 @@ import {
 } from 'react-native';
 
 import { deleteSession, getSession, setSessionNote } from '../../db/queries/sessions';
-import { formatWeightLabel } from '../../utils/format';
+import { formatDuration, formatWeightLabel } from '../../utils/format';
 import type { SessionDetail } from '../../types';
-
-function formatDuration(ms: number): string {
-  const totalMin = Math.max(0, Math.round(ms / 60000));
-  if (totalMin < 60) return `${totalMin}m`;
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
-}
 
 export default function HistoryDetailScreen() {
   const db = useSQLiteContext();

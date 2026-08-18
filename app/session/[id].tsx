@@ -27,8 +27,13 @@ import {
   updateSet,
 } from '../../db/queries/sessions';
 import { ExercisePickerModal } from '../../components/ExercisePickerModal';
+import { SessionSummaryModal } from '../../components/SessionSummaryModal';
 import { useExerciseReference } from '../../hooks/useExerciseReference';
 import { useActiveSessionStore } from '../../store/activeSession';
+import {
+  computeSessionSummary,
+  getSessionPriors,
+} from '../../utils/sessionSummary';
 import {
   classifySetDelta,
   formatAgeLabel,
@@ -36,12 +41,13 @@ import {
   formatSummaryLine,
 } from '../../utils/referenceSlots';
 import { formatWeightLabel } from '../../utils/format';
+import { isNewHeaviest, isNewRepPr } from '../../utils/pr';
 import type {
-  BestLastResult,
   ReferenceSlot,
   SessionDetail,
   WorkoutSet,
 } from '../../types';
+import type { SessionSummary } from '../../utils/sessionSummary';
 
 export default function SessionScreen() {
   const db = useSQLiteContext();
@@ -56,6 +62,7 @@ export default function SessionScreen() {
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [addExerciseOpen, setAddExerciseOpen] = useState(false);
   const [sessionNoteDraft, setSessionNoteDraft] = useState('');
+  const [summary, setSummary] = useState<SessionSummary | null>(null);
 
   const refresh = useCallback(async () => {
     if (!id) return;
@@ -84,14 +91,25 @@ export default function SessionScreen() {
     refresh();
   }
 
-  async function handleComplete() {
-    if (!id) return;
-    await markSessionComplete(db, id);
-    clearActiveSession();
+  function navigateAfterComplete() {
     if (router.canGoBack()) {
       router.back();
     } else {
       router.replace('/(tabs)/history');
+    }
+  }
+
+  async function handleComplete() {
+    if (!id || !session) return;
+    const completedAt = Date.now();
+    const priors = await getSessionPriors(db, id, session.exercises);
+    const nextSummary = computeSessionSummary(session, priors, completedAt);
+    await markSessionComplete(db, id);
+    clearActiveSession();
+    if (nextSummary.workingSetCount > 0) {
+      setSummary(nextSummary);
+    } else {
+      navigateAfterComplete();
     }
   }
 
@@ -247,6 +265,17 @@ export default function SessionScreen() {
         onSelect={(ex) => handleAddExercise(ex.id)}
         onClose={() => setAddExerciseOpen(false)}
       />
+
+      {summary ? (
+        <SessionSummaryModal
+          title={session.routine_name ?? 'Ad-hoc'}
+          summary={summary}
+          onDone={() => {
+            setSummary(null);
+            navigateAfterComplete();
+          }}
+        />
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -618,16 +647,6 @@ function ExerciseBody({
 
 function deltaColor(tone: 'up' | 'down' | 'flat'): string {
   return tone === 'up' ? '#1aa260' : tone === 'down' ? '#c00' : '#999';
-}
-
-function isNewHeaviest(s: WorkoutSet, best: BestLastResult | null): boolean {
-  if (!best) return false;
-  return s.weight > best.weight || (s.weight === best.weight && s.reps > best.reps);
-}
-
-function isNewRepPr(s: WorkoutSet, best: BestLastResult | null): boolean {
-  if (!best) return false;
-  return s.reps > best.reps || (s.reps === best.reps && s.weight > best.weight);
 }
 
 const styles = StyleSheet.create({
