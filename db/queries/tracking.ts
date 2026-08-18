@@ -2,8 +2,8 @@ import { SQLiteDatabase } from 'expo-sqlite';
 
 import type {
   BestLastResult,
-  LastSessionSet,
   ProgressionPoint,
+  QualifyingSessionSets,
   SetTypeFilter,
 } from '../../types';
 
@@ -13,15 +13,6 @@ interface BestLastRow {
   reps: number;
   created_at: number;
   started_at: number | null;
-}
-
-interface LastSessionSetRow {
-  id: string;
-  weight: number;
-  reps: number;
-  is_warmup: number;
-  created_at: number;
-  started_at: number;
 }
 
 interface ProgressionRow {
@@ -41,17 +32,6 @@ function rowToResult(row: BestLastRow): BestLastResult {
     reps: row.reps,
     created_at: row.created_at,
     started_at: row.started_at ?? undefined,
-  };
-}
-
-function rowToLastSessionSet(row: LastSessionSetRow): LastSessionSet {
-  return {
-    id: row.id,
-    weight: row.weight,
-    reps: row.reps,
-    is_warmup: row.is_warmup === 1,
-    created_at: row.created_at,
-    started_at: row.started_at,
   };
 }
 
@@ -80,17 +60,23 @@ export async function getBestSet(
   db: SQLiteDatabase,
   exerciseId: string,
   setType: SetTypeFilter = 'working',
+  excludeSessionId: string | null = null,
 ): Promise<BestLastResult | null> {
   const cond = setTypeCondition(setType, 's');
+  const excludeClause = excludeSessionId ? `AND sess.id <> ?` : ``;
+  const params: string[] = [exerciseId];
+  if (excludeSessionId) params.push(excludeSessionId);
   const row = await db.getFirstAsync<BestLastRow>(
     `SELECT s.id, s.weight, s.reps, s.created_at, NULL AS started_at
      FROM sets s
      JOIN session_exercises se ON s.session_exercise_id = se.id
+     JOIN sessions sess ON sess.id = se.session_id
      WHERE se.exercise_id = ?
        AND ${cond}
+       ${excludeClause}
      ORDER BY s.weight DESC, s.reps DESC, s.created_at ASC
      LIMIT 1;`,
-    exerciseId,
+    ...params,
   );
   return row ? rowToResult(row) : null;
 }
@@ -99,17 +85,23 @@ export async function getMostRepsSet(
   db: SQLiteDatabase,
   exerciseId: string,
   setType: SetTypeFilter = 'working',
+  excludeSessionId: string | null = null,
 ): Promise<BestLastResult | null> {
   const cond = setTypeCondition(setType, 's');
+  const excludeClause = excludeSessionId ? `AND sess.id <> ?` : ``;
+  const params: string[] = [exerciseId];
+  if (excludeSessionId) params.push(excludeSessionId);
   const row = await db.getFirstAsync<BestLastRow>(
     `SELECT s.id, s.weight, s.reps, s.created_at, NULL AS started_at
      FROM sets s
      JOIN session_exercises se ON s.session_exercise_id = se.id
+     JOIN sessions sess ON sess.id = se.session_id
      WHERE se.exercise_id = ?
        AND ${cond}
+       ${excludeClause}
      ORDER BY s.reps DESC, s.weight DESC, s.created_at ASC
      LIMIT 1;`,
-    exerciseId,
+    ...params,
   );
   return row ? rowToResult(row) : null;
 }
@@ -135,17 +127,37 @@ export async function getBestE1rmSet(
   return row ? rowToResult(row) : null;
 }
 
-export async function getLastSessionSets(
+interface RecentSessionRow {
+  session_id: string;
+  started_at: number;
+  session_note: string | null;
+}
+
+interface RecentSetRow {
+  session_id: string;
+  id: string;
+  weight: number;
+  reps: number;
+  is_warmup: number;
+  note: string | null;
+  created_at: number;
+}
+
+// Up to `n` most recent qualifying sessions (complete, >=1 working set for the
+// exercise, excluding the current session), newest first, each with its note
+// and full ordered set list.
+export async function getRecentQualifyingSessions(
   db: SQLiteDatabase,
   exerciseId: string,
   currentSessionId: string | null,
-): Promise<LastSessionSet[]> {
+  n: number,
+): Promise<QualifyingSessionSets[]> {
   const excludeClause = currentSessionId ? `AND sess.id <> ?` : ``;
   const findParams: string[] = [exerciseId];
   if (currentSessionId) findParams.push(currentSessionId);
 
-  const prior = await db.getFirstAsync<{ session_id: string }>(
-    `SELECT sess.id AS session_id
+  const sessions = await db.getAllAsync<RecentSessionRow>(
+    `SELECT sess.id AS session_id, sess.started_at AS started_at, sess.note AS session_note
      FROM sessions sess
      JOIN session_exercises se ON se.session_id = sess.id
      WHERE se.exercise_id = ?
@@ -157,22 +169,39 @@ export async function getLastSessionSets(
        )
        ${excludeClause}
      ORDER BY sess.started_at DESC
-     LIMIT 1;`,
+     LIMIT ?;`,
     ...findParams,
+    n,
   );
-  if (!prior) return [];
+  if (sessions.length === 0) return [];
 
-  const rows = await db.getAllAsync<LastSessionSetRow>(
-    `SELECT s.id, s.weight, s.reps, s.is_warmup, s.created_at, sess.started_at
+  const ids = sessions.map((s) => s.session_id);
+  const placeholders = ids.map(() => '?').join(', ');
+  const rows = await db.getAllAsync<RecentSetRow>(
+    `SELECT se.session_id AS session_id, s.id, s.weight, s.reps, s.is_warmup, s.note, s.created_at
      FROM sets s
      JOIN session_exercises se ON s.session_exercise_id = se.id
-     JOIN sessions sess ON sess.id = se.session_id
-     WHERE se.exercise_id = ? AND sess.id = ?
+     WHERE se.exercise_id = ? AND se.session_id IN (${placeholders})
      ORDER BY s.created_at ASC;`,
     exerciseId,
-    prior.session_id,
+    ...ids,
   );
-  return rows.map(rowToLastSessionSet);
+
+  return sessions.map((sess) => ({
+    sessionId: sess.session_id,
+    startedAt: sess.started_at,
+    sessionNote: sess.session_note,
+    sets: rows
+      .filter((r) => r.session_id === sess.session_id)
+      .map((r) => ({
+        id: r.id,
+        weight: r.weight,
+        reps: r.reps,
+        isWarmup: r.is_warmup === 1,
+        note: r.note,
+        createdAt: r.created_at,
+      })),
+  }));
 }
 
 // One row per qualifying completed session for the given exercise.

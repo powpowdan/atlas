@@ -11,6 +11,7 @@ import {
   getMostRepsSet,
 } from '../../db/queries/tracking';
 import { ProgressionChart } from '../../components/ProgressionChart';
+import { formatWeightLabel } from '../../utils/format';
 import type {
   BestLastResult,
   Exercise,
@@ -164,7 +165,7 @@ function RecordCell({ label, data }: RecordCellProps) {
       {data ? (
         <>
           <Text style={styles.recordValue}>
-            {data.weight} × {data.reps}
+            {formatWeightLabel(data.weight)} × {data.reps}
           </Text>
           <Text style={styles.recordDate}>
             {new Date(data.created_at).toLocaleDateString()}

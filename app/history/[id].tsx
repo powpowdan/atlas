@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { deleteSession, getSession, setSessionNote } from '../../db/queries/sessions';
+import { formatWeightLabel } from '../../utils/format';
 import type { SessionDetail } from '../../types';
 
 function formatDuration(ms: number): string {
@@ -154,7 +155,7 @@ export default function HistoryDetailScreen() {
               <View key={s.id} style={styles.setRow}>
                 <Text style={styles.setRowIndex}>{idx + 1}.</Text>
                 <Text style={styles.setRowMain}>
-                  {s.weight} × {s.reps}
+                  {formatWeightLabel(s.weight)} × {s.reps}
                   {s.is_warmup ? '  (warm)' : ''}
                 </Text>
                 {s.note ? (

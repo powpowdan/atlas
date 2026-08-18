@@ -86,13 +86,59 @@ export interface BestLastResult {
   started_at?: number;
 }
 
-export interface LastSessionSet {
+export interface QualifyingSessionSet {
   id: string;
   weight: number;
   reps: number;
-  is_warmup: boolean;
-  created_at: number;
-  started_at: number;
+  isWarmup: boolean;
+  note: string | null;
+  createdAt: number;
+}
+
+export interface QualifyingSessionSets {
+  sessionId: string;
+  startedAt: number;
+  sessionNote: string | null;
+  sets: QualifyingSessionSet[];
+}
+
+export interface ReferenceSlot {
+  position: number;
+  weight: number;
+  reps: number;
+  sessionId: string;
+  startedAt: number;
+  ageInSessions: number;
+  isGhost: boolean;
+  note: string | null;
+  prevDelta: SetDelta | null;
+}
+
+export interface ReferenceSummary {
+  topSetDeltaWeight: number;
+  topSetDeltaReps: number;
+  setCountDelta: number;
+  newerTop: { weight: number; reps: number };
+  olderTop: { weight: number; reps: number };
+  newerSetCount: number;
+  olderSetCount: number;
+  olderStartedAt: number;
+}
+
+export interface ReferenceBundle {
+  slots: ReferenceSlot[];
+  warmups: ReferenceSlot[];
+  summary: ReferenceSummary | null;
+  notesCount: number;
+  latestSessionStartedAt: number | null;
+  latestSessionNote: string | null;
+}
+
+export interface SetDelta {
+  kind: 'new-set' | 'match' | 'delta';
+  weightDelta?: number;
+  repsDelta?: number;
+  tone: 'up' | 'down' | 'flat';
 }
 
 export type SetTypeFilter = 'working' | 'all' | 'warmup';

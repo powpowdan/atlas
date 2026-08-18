@@ -26,18 +26,21 @@ import {
   updateSet,
 } from '../../db/queries/sessions';
 import { ExercisePickerModal } from '../../components/ExercisePickerModal';
-import { useExerciseBestLast } from '../../hooks/useExerciseBestLast';
+import { useExerciseReference } from '../../hooks/useExerciseReference';
 import { useActiveSessionStore } from '../../store/activeSession';
+import {
+  classifySetDelta,
+  formatAgeLabel,
+  formatDeltaText,
+  formatSummaryLine,
+} from '../../utils/referenceSlots';
+import { formatWeightLabel } from '../../utils/format';
 import type {
   BestLastResult,
-  LastSessionSet,
+  ReferenceSlot,
   SessionDetail,
   WorkoutSet,
 } from '../../types';
-
-function formatWeight(n: number): string {
-  return String(n);
-}
 
 export default function SessionScreen() {
   const db = useSQLiteContext();
@@ -245,25 +248,30 @@ function ExerciseBlock({
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [editingSet, setEditingSet] = useState<WorkoutSet | null>(null);
+  const [notesExpanded, setNotesExpanded] = useState(false);
 
   const weightRef = useRef<TextInput>(null);
   const repsRef = useRef<TextInput>(null);
 
-  const { heaviest, mostReps, lastSets } = useExerciseBestLast(
+  const { bundle, heaviest, mostReps } = useExerciseReference(
     sessionExercise.exercise_id,
     sessionId,
     refreshKey,
   );
 
-  const hasHistory =
-    !!heaviest || !!mostReps || (lastSets?.length ?? 0) > 0;
+  const hasHistory = bundle.slots.length > 0;
+
+  const workingIndexById = new Map<string, number>();
+  (sessionExercise.sets ?? [])
+    .filter((s) => !s.is_warmup)
+    .forEach((s, i) => workingIndexById.set(s.id, i));
 
   // Carry-forward on mount: prefill from the most recent set in this session.
   useEffect(() => {
     const sets = sessionExercise.sets ?? [];
     if (sets.length > 0) {
       const last = sets[sets.length - 1];
-      setWeight(formatWeight(last.weight));
+      setWeight(String(last.weight));
       setReps(String(last.reps));
     }
     // mount-only
@@ -305,7 +313,7 @@ function ExerciseBlock({
           note: note.trim() || null,
         });
         // Carry-forward: prefill the next set with the just-added values.
-        setWeight(formatWeight(weightNum));
+        setWeight(String(weightNum));
         setReps(String(repsNum));
         setNote('');
         setIsWarmup(false);
@@ -319,7 +327,7 @@ function ExerciseBlock({
 
   function startEdit(s: WorkoutSet) {
     setEditingSet(s);
-    setWeight(formatWeight(s.weight));
+    setWeight(String(s.weight));
     setReps(String(s.reps));
     setIsWarmup(s.is_warmup);
     setNote(s.note ?? '');
@@ -336,7 +344,7 @@ function ExerciseBlock({
   async function removeSet(s: WorkoutSet) {
     Alert.alert(
       'Delete set?',
-      `${formatWeight(s.weight)} × ${s.reps}`,
+      `${formatWeightLabel(s.weight)} × ${s.reps}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -351,10 +359,17 @@ function ExerciseBlock({
     );
   }
 
-  function copyFromLast(set: LastSessionSet) {
-    setWeight(formatWeight(set.weight));
-    setReps(String(set.reps));
+  function copyFromReference(slot: ReferenceSlot) {
+    setWeight(String(slot.weight));
+    setReps(String(slot.reps));
     repsRef.current?.focus();
+  }
+
+  function deltaForSet(s: WorkoutSet) {
+    if (!hasHistory || s.is_warmup) return null;
+    const slot = bundle.slots[workingIndexById.get(s.id) ?? -1];
+    const delta = classifySetDelta({ weight: s.weight, reps: s.reps }, slot);
+    return { text: formatDeltaText(delta), color: deltaColor(delta.tone) };
   }
 
   return (
@@ -364,15 +379,101 @@ function ExerciseBlock({
       </Pressable>
 
       {hasHistory ? (
-        <>
-          <View style={styles.pillRow}>
-            <ContextPill label="Heaviest" data={heaviest} />
-            <ContextPill label="Most reps" data={mostReps} />
-          </View>
-          {(lastSets?.length ?? 0) > 0 ? (
-            <LastSessionList sets={lastSets} onCopy={copyFromLast} />
+        <View style={styles.referenceBox}>
+          {bundle.latestSessionStartedAt != null ? (
+            <Text style={styles.referenceHeader}>
+              Last time —{' '}
+              {new Date(bundle.latestSessionStartedAt).toLocaleDateString()}
+            </Text>
           ) : null}
-        </>
+          {bundle.summary ? (
+            <Text style={styles.summaryLine}>
+              {formatSummaryLine(bundle.summary)}
+            </Text>
+          ) : null}
+          <View style={styles.slotRow}>
+            {bundle.warmups.map((w) => (
+              <Pressable
+                key={`w-${w.position}`}
+                onPress={() => copyFromReference(w)}
+                style={({ pressed }) => [
+                  styles.slotChip,
+                  styles.slotChipWarm,
+                  pressed && styles.slotChipPressed,
+                ]}
+              >
+                <Text style={styles.slotChipWarmText}>
+                  {formatWeightLabel(w.weight)} × {w.reps} (warm)
+                </Text>
+              </Pressable>
+            ))}
+            {bundle.slots.map((slot) => (
+              <Pressable
+                key={`s-${slot.position}`}
+                onPress={() => copyFromReference(slot)}
+                style={({ pressed }) => [
+                  styles.slotChip,
+                  slot.isGhost && styles.slotChipGhost,
+                  pressed && styles.slotChipPressed,
+                ]}
+              >
+                <Text style={styles.slotChipIndex}>{slot.position}.</Text>
+                <Text style={styles.slotChipMain}>
+                  {formatWeightLabel(slot.weight)} × {slot.reps}
+                </Text>
+                {slot.isGhost ? (
+                  <Text style={styles.ghostLabel}>
+                    {' '}⟡ {formatAgeLabel(slot.startedAt)}
+                  </Text>
+                ) : null}
+                {slot.prevDelta ? (
+                  <Text
+                    style={[
+                      styles.chipDelta,
+                      { color: deltaColor(slot.prevDelta.tone) },
+                    ]}
+                  >
+                    {' '}
+                    {formatDeltaText(slot.prevDelta)}
+                  </Text>
+                ) : null}
+              </Pressable>
+            ))}
+          </View>
+          {bundle.notesCount > 0 ? (
+            <View>
+              <Pressable
+                style={styles.notesToggle}
+                onPress={() => setNotesExpanded((v) => !v)}
+              >
+                <Text style={styles.notesToggleText}>
+                  {notesExpanded ? '⌃' : '⌄'} notes ({bundle.notesCount})
+                </Text>
+              </Pressable>
+              {notesExpanded ? (
+                <View style={styles.notesBox}>
+                  {bundle.latestSessionNote ? (
+                    <Text style={styles.noteRow}>
+                      Session{' '}
+                      {bundle.latestSessionStartedAt != null
+                        ? new Date(bundle.latestSessionStartedAt).toLocaleDateString()
+                        : ''}
+                      : {bundle.latestSessionNote}
+                    </Text>
+                  ) : null}
+                  {bundle.slots
+                    .filter((s) => (s.note ?? '').trim().length > 0)
+                    .map((s) => (
+                      <Text key={s.position} style={styles.noteRow}>
+                        Set {s.position} ({new Date(s.startedAt).toLocaleDateString()}):{' '}
+                        {s.note}
+                      </Text>
+                    ))}
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
       ) : (
         <View style={styles.firstTimeBox}>
           <Text style={styles.firstTimeText}>
@@ -431,87 +532,60 @@ function ExerciseBlock({
       </View>
 
       <View style={styles.setList}>
-        {(sessionExercise.sets ?? []).map((s, idx) => (
-          <View key={s.id} style={styles.setRow}>
-            <Text style={styles.setRowIndex}>{idx + 1}.</Text>
-            <Text style={styles.setRowMain}>
-              {formatWeight(s.weight)} × {s.reps}
-              {s.is_warmup ? '  (warm)' : ''}
-            </Text>
-            {s.note ? <Text style={styles.setRowNote}>· {s.note}</Text> : null}
-            <Pressable onPress={() => startEdit(s)} style={styles.setIconBtn}>
-              <Text>✎</Text>
-            </Pressable>
-            <Pressable onPress={() => removeSet(s)} style={styles.setIconBtn}>
-              <Text style={{ color: '#c00' }}>✕</Text>
-            </Pressable>
-          </View>
-        ))}
+        {(sessionExercise.sets ?? []).map((s, idx) => {
+          const delta = deltaForSet(s);
+          const showHeaviest =
+            hasHistory && !s.is_warmup && isNewHeaviest(s, heaviest);
+          const showRepPr = hasHistory && !s.is_warmup && isNewRepPr(s, mostReps);
+          return (
+            <View key={s.id} style={styles.setRow}>
+              <Text style={styles.setRowIndex}>{idx + 1}.</Text>
+              <Text style={styles.setRowMain}>
+                {formatWeightLabel(s.weight)} × {s.reps}
+                {s.is_warmup ? '  (warm)' : ''}
+              </Text>
+              {delta ? (
+                <Text style={[styles.deltaText, { color: delta.color }]}>
+                  {delta.text}
+                </Text>
+              ) : null}
+              {showHeaviest ? (
+                <View style={styles.prBadge}>
+                  <Text style={styles.prBadgeText}>NEW HEAVIEST</Text>
+                </View>
+              ) : null}
+              {showRepPr ? (
+                <View style={styles.prBadge}>
+                  <Text style={styles.prBadgeText}>NEW REP PR</Text>
+                </View>
+              ) : null}
+              {s.note ? <Text style={styles.setRowNote}>· {s.note}</Text> : null}
+              <Pressable onPress={() => startEdit(s)} style={styles.setIconBtn}>
+                <Text>✎</Text>
+              </Pressable>
+              <Pressable onPress={() => removeSet(s)} style={styles.setIconBtn}>
+                <Text style={{ color: '#c00' }}>✕</Text>
+              </Pressable>
+            </View>
+          );
+        })}
       </View>
     </View>
   );
 }
 
-interface ContextPillProps {
-  label: string;
-  data: BestLastResult | null;
+function deltaColor(tone: 'up' | 'down' | 'flat'): string {
+  return tone === 'up' ? '#1aa260' : tone === 'down' ? '#c00' : '#999';
 }
 
-function ContextPill({ label, data }: ContextPillProps) {
-  if (!data) {
-    return (
-      <View style={[styles.pill, styles.pillEmpty]}>
-        <Text style={styles.pillLabel}>{label}</Text>
-        <Text style={styles.pillValue}>—</Text>
-      </View>
-    );
-  }
-  const date = new Date(data.started_at ?? data.created_at);
-  return (
-    <View style={styles.pill}>
-      <Text style={styles.pillLabel}>{label}</Text>
-      <Text style={styles.pillValue}>
-        {formatWeight(data.weight)} × {data.reps}
-      </Text>
-      <Text style={styles.pillDate}>{date.toLocaleDateString()}</Text>
-    </View>
-  );
+function isNewHeaviest(s: WorkoutSet, best: BestLastResult | null): boolean {
+  if (!best) return false;
+  return s.weight > best.weight || (s.weight === best.weight && s.reps > best.reps);
 }
 
-interface LastSessionListProps {
-  sets: LastSessionSet[];
-  onCopy: (set: LastSessionSet) => void;
-}
-
-function LastSessionList({ sets, onCopy }: LastSessionListProps) {
-  if (sets.length === 0) return null;
-  const date = new Date(sets[0].started_at).toLocaleDateString();
-  return (
-    <View style={styles.lastList}>
-      <Text style={styles.lastListHeader}>Last session — {date}</Text>
-      <View style={styles.lastListRows}>
-        {sets.map((s, idx) => (
-          <Pressable
-            key={s.id}
-            onPress={() => onCopy(s)}
-            style={({ pressed }) => [
-              styles.lastRow,
-              s.is_warmup && styles.lastRowWarm,
-              pressed && styles.lastRowPressed,
-            ]}
-          >
-            <Text style={[styles.lastRowIndex, s.is_warmup && styles.lastRowWarmText]}>
-              {idx + 1}.
-            </Text>
-            <Text style={[styles.lastRowMain, s.is_warmup && styles.lastRowWarmText]}>
-              {formatWeight(s.weight)} × {s.reps}
-              {s.is_warmup ? '  (warm)' : ''}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
+function isNewRepPr(s: WorkoutSet, best: BestLastResult | null): boolean {
+  if (!best) return false;
+  return s.reps > best.reps || (s.reps === best.reps && s.weight > best.weight);
 }
 
 const styles = StyleSheet.create({
@@ -547,22 +621,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f3f3',
   },
   exerciseName: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  pillRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
-  },
-  pill: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 6,
-    padding: 8,
-  },
-  pillEmpty: { opacity: 0.5 },
-  pillLabel: { fontSize: 11, fontWeight: '700', color: '#666', textTransform: 'uppercase' },
-  pillValue: { fontSize: 16, fontWeight: '600', marginTop: 2 },
-  pillDate: { fontSize: 11, color: '#999', marginTop: 2 },
-  lastList: {
+  referenceBox: {
     marginBottom: 12,
     backgroundColor: '#fafcff',
     borderRadius: 6,
@@ -570,15 +629,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#eef2f7',
   },
-  lastListHeader: {
+  referenceHeader: {
     fontSize: 11,
     fontWeight: '700',
     color: '#666',
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  lastListRows: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  lastRow: {
+  summaryLine: { fontSize: 12, color: '#555', marginBottom: 6 },
+  slotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  slotChip: {
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 4,
@@ -586,12 +646,36 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderWidth: 1,
     borderColor: '#e3e8ef',
+    alignItems: 'center',
   },
-  lastRowWarm: { backgroundColor: '#fbfbfb', borderColor: '#eee' },
-  lastRowPressed: { backgroundColor: '#e8f0ff', borderColor: '#0a7cff' },
-  lastRowIndex: { width: 18, color: '#999', fontSize: 14 },
-  lastRowMain: { fontSize: 14, fontWeight: '500' },
-  lastRowWarmText: { color: '#aaa' },
+  slotChipGhost: { opacity: 0.55, borderColor: '#ddd', borderStyle: 'dashed' },
+  slotChipWarm: { backgroundColor: '#fbfbfb', borderColor: '#eee' },
+  slotChipPressed: { backgroundColor: '#e8f0ff', borderColor: '#0a7cff' },
+  slotChipIndex: { width: 18, color: '#999', fontSize: 14 },
+  slotChipMain: { fontSize: 14, fontWeight: '500' },
+  slotChipWarmText: { color: '#aaa', fontSize: 14 },
+  ghostLabel: { fontSize: 10, color: '#999' },
+  chipDelta: { fontSize: 10, fontWeight: '600' },
+  notesToggle: { paddingVertical: 4 },
+  notesToggleText: { fontSize: 12, color: '#0a7cff', fontWeight: '600' },
+  notesBox: {
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#eee',
+    padding: 8,
+    marginTop: 4,
+    gap: 4,
+  },
+  noteRow: { fontSize: 12, color: '#555' },
+  deltaText: { fontSize: 12, fontWeight: '600' },
+  prBadge: {
+    backgroundColor: '#b8860b',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  prBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   firstTimeBox: {
     backgroundColor: '#fff8e6',
     borderRadius: 6,
