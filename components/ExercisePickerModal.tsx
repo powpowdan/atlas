@@ -14,6 +14,8 @@ import {
 import { listExercises } from '../db/queries/exercises';
 import type { Exercise } from '../types';
 import { ExerciseEditorModal } from './ExerciseEditorModal';
+import { LogoMark } from './LogoMark';
+import { colors } from '../constants/theme';
 
 interface ExercisePickerModalProps {
   visible: boolean;
@@ -77,54 +79,57 @@ export function ExercisePickerModal({
         presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'overFullScreen'}
         onRequestClose={onClose}
       >
-        <View style={styles.modalHeader}>
-          <Pressable onPress={onClose}>
-            <Text style={styles.modalCancel}>Cancel</Text>
-          </Pressable>
-          <Text style={styles.modalTitle}>Add exercise</Text>
-          <Pressable onPress={() => setEditorOpen(true)}>
-            <Text style={styles.modalNew}>+ New</Text>
-          </Pressable>
-        </View>
-        <View style={styles.searchWrap}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search exercises"
-            value={query}
-            onChangeText={setQuery}
+        <View style={styles.modalBody}>
+          <View style={styles.modalHeader}>
+            <Pressable onPress={onClose}>
+              <Text style={styles.modalCancel}>Cancel</Text>
+            </Pressable>
+            <Text style={styles.modalTitle}>Add exercise</Text>
+            <Pressable onPress={() => setEditorOpen(true)}>
+              <Text style={styles.modalNew}>+ New</Text>
+            </Pressable>
+          </View>
+          <View style={styles.searchWrap}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search exercises"
+              value={query}
+              onChangeText={setQuery}
+            />
+          </View>
+          <FlatList
+            data={filtered}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Pressable
+                style={styles.pickerItem}
+                onPress={() => handleSelect(item)}
+              >
+                <Text style={styles.pickerItemName}>{item.name}</Text>
+                <Text style={styles.pickerItemMeta}>
+                  {item.category ?? '—'}
+                  {item.is_assisted ? ' · assisted' : ''}
+                </Text>
+              </Pressable>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyWrap}>
+                <LogoMark size={200} />
+                <Text style={styles.empty}>
+                  {query
+                    ? `No exercises match "${query}".`
+                    : 'No exercises available.'}
+                </Text>
+                <Pressable
+                  style={styles.emptyCreateBtn}
+                  onPress={() => setEditorOpen(true)}
+                >
+                  <Text style={styles.emptyCreateBtnText}>+ Create a new exercise</Text>
+                </Pressable>
+              </View>
+            }
           />
         </View>
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.pickerItem}
-              onPress={() => handleSelect(item)}
-            >
-              <Text style={styles.pickerItemName}>{item.name}</Text>
-              <Text style={styles.pickerItemMeta}>
-                {item.category ?? '—'}
-                {item.is_assisted ? ' · assisted' : ''}
-              </Text>
-            </Pressable>
-          )}
-          ListEmptyComponent={
-            <View style={styles.emptyWrap}>
-              <Text style={styles.empty}>
-                {query
-                  ? `No exercises match "${query}".`
-                  : 'No exercises available.'}
-              </Text>
-              <Pressable
-                style={styles.emptyCreateBtn}
-                onPress={() => setEditorOpen(true)}
-              >
-                <Text style={styles.emptyCreateBtnText}>+ Create a new exercise</Text>
-              </Pressable>
-            </View>
-          }
-        />
       </Modal>
       <ExerciseEditorModal
         visible={editorOpen}
@@ -136,39 +141,41 @@ export function ExercisePickerModal({
 }
 
 const styles = StyleSheet.create({
+  modalBody: { flex: 1, backgroundColor: colors.paper },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  modalTitle: { fontSize: 16, fontWeight: '600' },
-  modalCancel: { color: '#555', fontSize: 16 },
-  modalNew: { color: '#0a7cff', fontWeight: '600', fontSize: 16 },
+  modalTitle: { fontSize: 16, fontWeight: '600', color: colors.ink },
+  modalCancel: { color: colors.inkSoft, fontSize: 16 },
+  modalNew: { color: colors.ink, fontWeight: '600', fontSize: 16 },
   searchWrap: { padding: 12 },
   searchInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.borderStrong,
     borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    color: colors.ink,
   },
   pickerItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  pickerItemName: { fontSize: 16, fontWeight: '500' },
-  pickerItemMeta: { color: '#666', fontSize: 13, marginTop: 2 },
+  pickerItemName: { fontSize: 16, fontWeight: '500', color: colors.ink },
+  pickerItemMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
   emptyWrap: { padding: 24, alignItems: 'center' },
-  empty: { color: '#999', textAlign: 'center', marginBottom: 12 },
+  empty: { color: colors.textTertiary, textAlign: 'center', marginVertical: 12 },
   emptyCreateBtn: {
-    backgroundColor: '#0a7cff',
+    backgroundColor: colors.ink,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 6,
   },
-  emptyCreateBtnText: { color: '#fff', fontWeight: '600' },
+  emptyCreateBtnText: { color: colors.paper, fontWeight: '600' },
 });

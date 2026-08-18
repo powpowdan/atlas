@@ -11,6 +11,7 @@ import {
   getMostRepsSet,
 } from '../../db/queries/tracking';
 import { ProgressionChart } from '../../components/ProgressionChart';
+import { colors, type } from '../../constants/theme';
 import { formatWeightLabel } from '../../utils/format';
 import type {
   BestLastResult,
@@ -179,23 +180,23 @@ function RecordCell({ label, data }: RecordCellProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  title: { fontSize: 20, fontWeight: '700' },
-  subtitle: { color: '#666', fontSize: 13, marginTop: 4 },
+  container: { flex: 1, backgroundColor: colors.paper },
+  header: { padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+  title: { ...type.display, fontSize: 20, fontWeight: '700', color: colors.ink },
+  subtitle: { color: colors.inkSoft, fontSize: 13, marginTop: 4 },
   recordsRow: {
     flexDirection: 'row',
     padding: 16,
     borderBottomWidth: 8,
-    borderBottomColor: '#f3f3f3',
+    borderBottomColor: colors.borderSubtle,
   },
   recordCell: { flex: 1, alignItems: 'center' },
-  recordLabel: { color: '#999', fontSize: 11, marginBottom: 4 },
-  recordValue: { fontSize: 15, fontWeight: '600' },
-  recordValueEmpty: { fontSize: 15, fontWeight: '600', color: '#ccc' },
-  recordDate: { color: '#999', fontSize: 11, marginTop: 2 },
+  recordLabel: { color: colors.textTertiary, fontSize: 11, marginBottom: 4 },
+  recordValue: { ...type.tabular, fontSize: 15, fontWeight: '600', color: colors.ink },
+  recordValueEmpty: { fontSize: 15, fontWeight: '600', color: colors.textDisabled },
+  recordDate: { color: colors.textTertiary, fontSize: 11, marginTop: 2 },
   sectionLabel: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
-  sectionLabelText: { color: '#999', fontSize: 11, fontWeight: '600' },
+  sectionLabelText: { color: colors.textTertiary, fontSize: 11, fontWeight: '600' },
   tabRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -206,15 +207,15 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.borderStrong,
     borderRadius: 6,
   },
   tabActive: {
-    backgroundColor: '#0a7cff',
-    borderColor: '#0a7cff',
+    backgroundColor: colors.ink,
+    borderColor: colors.ink,
   },
-  tabText: { color: '#555', fontSize: 13, fontWeight: '500' },
-  tabTextActive: { color: '#fff', fontWeight: '600' },
+  tabText: { color: colors.inkSoft, fontSize: 13, fontWeight: '500' },
+  tabTextActive: { color: colors.paper, fontWeight: '600' },
   chartWrap: { paddingVertical: 8 },
-  empty: { padding: 12, color: '#999', textAlign: 'center' },
+  empty: { padding: 12, color: colors.textTertiary, textAlign: 'center' },
 });

@@ -1,5 +1,7 @@
-import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { LogoMark } from './LogoMark';
+import { colors, type } from '../constants/theme';
 import { formatDuration, formatVolume, formatWeightLabel } from '../utils/format';
 import type { SessionSummary } from '../utils/sessionSummary';
 
@@ -18,12 +20,10 @@ export function SessionSummaryModal({
     <Modal visible transparent animationType="fade" onRequestClose={onDone}>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Image
-            source={require('../logo.jpg')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>Session complete</Text>
+          <LogoMark size={120} />
+          <View style={styles.stamp}>
+            <Text style={styles.stampText}>Session complete</Text>
+          </View>
           <Text style={styles.sessionName}>{title}</Text>
 
           <Text style={styles.volume}>{formatVolume(summary.workingVolume)} lbs</Text>
@@ -58,7 +58,7 @@ export function SessionSummaryModal({
           {summary.hasPriors ? (
             <Text style={styles.prRow}>
               {summary.prCount > 0
-                ? `⭐ ${summary.prCount} PR${summary.prCount === 1 ? '' : 's'} set`
+                ? `✦ ${summary.prCount} PR${summary.prCount === 1 ? '' : 's'} set`
                 : 'No PRs this time'}
             </Text>
           ) : null}
@@ -77,40 +77,60 @@ export function SessionSummaryModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.paper,
     borderRadius: 12,
     padding: 24,
     width: '88%',
     alignItems: 'center',
   },
-  logo: { width: 100, height: 55, marginBottom: 4 },
-  title: { fontSize: 20, fontWeight: '700' },
-  sessionName: { fontSize: 14, color: '#666', marginTop: 2 },
-  volume: { fontSize: 34, fontWeight: '700', marginTop: 16 },
-  volumeLabel: { fontSize: 12, color: '#999', textTransform: 'uppercase' },
-  counts: { fontSize: 15, color: '#333', marginTop: 4, fontWeight: '500' },
-  footnote: { fontSize: 12, color: '#999', marginTop: 2 },
+  stamp: {
+    borderWidth: 1.5,
+    borderColor: colors.verdigris,
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  stampText: {
+    color: colors.verdigris,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+  },
+  sessionName: { fontSize: 14, color: colors.inkSoft, marginTop: 2 },
+  volume: {
+    ...type.display,
+    fontSize: 34,
+    fontWeight: '700',
+    marginTop: 16,
+    color: colors.ink,
+  },
+  volumeLabel: { fontSize: 12, color: colors.textTertiary, textTransform: 'uppercase' },
+  counts: { ...type.tabular, fontSize: 15, color: colors.inkFaint, marginTop: 4, fontWeight: '500' },
+  footnote: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
   divider: {
     width: '100%',
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: colors.border,
     marginVertical: 14,
   },
-  detailRow: { fontSize: 14, color: '#444', paddingVertical: 2 },
-  prRow: { fontSize: 14, color: '#b8860b', fontWeight: '600', paddingVertical: 2 },
+  detailRow: { fontSize: 14, color: colors.inkFaint, paddingVertical: 2 },
+  prRow: { ...type.tabular, fontSize: 14, color: colors.brass, fontWeight: '600', paddingVertical: 2 },
   equivalence: {
     fontSize: 13,
-    color: '#666',
+    color: colors.inkSoft,
     fontStyle: 'italic',
     marginTop: 10,
   },
   doneBtn: {
-    backgroundColor: '#1aa260',
+    backgroundColor: colors.verdigris,
     borderRadius: 6,
     paddingHorizontal: 40,
     paddingVertical: 12,
@@ -118,5 +138,5 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     alignItems: 'center',
   },
-  doneBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  doneBtnText: { color: colors.paper, fontWeight: '700', fontSize: 16 },
 });

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Line, Polyline, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Path, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
+import { colors } from '../constants/theme';
 import type { ProgressionMetric, ProgressionPoint } from '../types';
 
 interface ProgressionChartProps {
@@ -54,6 +55,16 @@ function formatDate(ms: number): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
+function starPath(cx: number, cy: number, outer: number, inner: number): string {
+  const pts: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 === 0 ? outer : inner;
+    const a = (Math.PI / 5) * i - Math.PI / 2;
+    pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
+  }
+  return `M${pts.join('L')}Z`;
+}
+
 // "Nice" axis bounds: round the max up and min down to a tidy number of
 // gridlines. For a single-point chart, we still want a readable range
 // around the value.
@@ -74,7 +85,7 @@ function computeBounds(values: number[]): { min: number; max: number } {
 }
 
 export function ProgressionChart({ points, metric, onDotPress }: ProgressionChartProps) {
-  const { xPositions, yPositions, gridValues, xTickIndices } = useMemo(() => {
+  const { xPositions, yPositions, gridValues, xTickIndices, prFlags } = useMemo(() => {
     const values = points.map((p) => valueForMetric(p, metric));
     const { min, max } = computeBounds(values);
     const range = max - min || 1;
@@ -94,6 +105,15 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
       gridValues.push(min + t * range);
     }
 
+    // A PR summit is a point strictly above every earlier value in the series
+    // (same "beats the existing best" rule as the best-set tracking).
+    let runningMax = Number.NEGATIVE_INFINITY;
+    const prFlags = values.map((v) => {
+      const isPr = runningMax > Number.NEGATIVE_INFINITY && v > runningMax;
+      if (v > runningMax) runningMax = v;
+      return isPr;
+    });
+
     // 3 date ticks: first, middle, last.
     const xTickIndices: number[] = [];
     if (points.length > 0) {
@@ -106,7 +126,7 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
       }
     }
 
-    return { xPositions, yPositions, gridValues, xTickIndices };
+    return { xPositions, yPositions, gridValues, xTickIndices, prFlags };
   }, [points, metric]);
 
   if (points.length === 0) {
@@ -133,7 +153,7 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
           width={PLOT_WIDTH}
           height={PLOT_HEIGHT}
           fill="transparent"
-          stroke="#eee"
+          stroke={colors.border}
           strokeWidth={1}
         />
         {gridValues.map((_, i) => {
@@ -146,7 +166,7 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
               x2={PAD_LEFT + PLOT_WIDTH}
               y1={y}
               y2={y}
-              stroke="#f0f0f0"
+              stroke={colors.borderSubtle}
               strokeWidth={1}
             />
           );
@@ -160,7 +180,7 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
               x={PAD_LEFT - 6}
               y={y + 3}
               fontSize={9}
-              fill="#999"
+              fill={colors.textTertiary}
               textAnchor="end"
             >
               {formatTickValue(v, metric)}
@@ -171,8 +191,9 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
           <Polyline
             points={polylinePoints}
             fill="none"
-            stroke="#0a7cff"
-            strokeWidth={1.5}
+            stroke={colors.ink}
+            strokeWidth={2}
+            strokeDasharray="6 4"
           />
         ) : null}
         {points.map((p, i) => {
@@ -184,6 +205,7 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
               key={p.sessionId}
               cx={cx}
               cy={cy}
+              isPr={prFlags[i]}
               tickLabel={tickLabel}
               showTickLabel={xTickIndices.includes(i)}
               onPress={() => onDotPress(p.sessionId)}
@@ -198,24 +220,29 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
 interface ChartDotProps {
   cx: number;
   cy: number;
+  isPr: boolean;
   tickLabel: string;
   showTickLabel: boolean;
   onPress: () => void;
 }
 
-function ChartDot({ cx, cy, tickLabel, showTickLabel, onPress }: ChartDotProps) {
+function ChartDot({ cx, cy, isPr, tickLabel, showTickLabel, onPress }: ChartDotProps) {
   // Hit area is an invisible rect around the dot — react-native-svg doesn't
   // ship Pressable natively, so we render the dot and label as SVG and put
   // a transparent Rect over a 24x24 area as the tap target.
   return (
     <>
-      <Circle cx={cx} cy={cy} r={3} fill="#0a7cff" />
+      {isPr ? (
+        <Path d={starPath(cx, cy, 5.5, 2.2)} fill={colors.brass} />
+      ) : (
+        <Circle cx={cx} cy={cy} r={3} fill={colors.ink} />
+      )}
       {showTickLabel ? (
         <SvgText
           x={cx}
           y={VIEW_HEIGHT - 6}
           fontSize={9}
-          fill="#999"
+          fill={colors.textTertiary}
           textAnchor="middle"
         >
           {tickLabel}
@@ -237,10 +264,10 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 8, paddingTop: 8 },
   axisLabel: {
     fontSize: 11,
-    color: '#999',
+    color: colors.textTertiary,
     marginLeft: 36,
     marginBottom: 4,
   },
   emptyWrap: { padding: 24, alignItems: 'center' },
-  empty: { color: '#999', textAlign: 'center' },
+  empty: { color: colors.textTertiary, textAlign: 'center' },
 });

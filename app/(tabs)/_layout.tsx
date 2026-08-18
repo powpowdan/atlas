@@ -3,6 +3,7 @@ import { Pressable, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { TabIcon } from '../../components/TabIcon';
+import { colors, fonts } from '../../constants/theme';
 
 function ManageHeaderButton() {
   const router = useRouter();
@@ -12,7 +13,7 @@ function ManageHeaderButton() {
       hitSlop={{ top: 16, bottom: 16, left: 24, right: 8 }}
       style={{ paddingHorizontal: 4, paddingVertical: 6 }}
     >
-      <Text style={{ color: '#0a7cff', fontWeight: '600' }}>Manage</Text>
+      <Text style={{ color: colors.ink, fontWeight: '600' }}>Manage</Text>
     </Pressable>
   );
 }
@@ -21,9 +22,10 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#0a7cff',
-        headerStyle: { backgroundColor: '#fff' },
-        headerTitleStyle: { fontWeight: '600' },
+        tabBarActiveTintColor: colors.ink,
+        tabBarStyle: { backgroundColor: colors.paper },
+        headerStyle: { backgroundColor: colors.paper },
+        headerTitleStyle: { fontFamily: fonts.display, fontWeight: '600' },
       }}
     >
       <Tabs.Screen

@@ -30,6 +30,7 @@ import { ExercisePickerModal } from '../../components/ExercisePickerModal';
 import { SessionSummaryModal } from '../../components/SessionSummaryModal';
 import { useExerciseReference } from '../../hooks/useExerciseReference';
 import { useActiveSessionStore } from '../../store/activeSession';
+import { colors, type } from '../../constants/theme';
 import {
   computeSessionSummary,
   getSessionPriors,
@@ -248,7 +249,7 @@ export default function SessionScreen() {
             <Text style={styles.modalDone}>Save</Text>
           </Pressable>
         </View>
-        <View style={{ padding: 16, flex: 1 }}>
+        <View style={styles.noteModalBody}>
           <TextInput
             style={styles.noteInput}
             placeholder="How did the session feel?"
@@ -622,12 +623,12 @@ function ExerciseBody({
               ) : null}
               {showHeaviest ? (
                 <View style={styles.prBadge}>
-                  <Text style={styles.prBadgeText}>NEW HEAVIEST</Text>
+                  <Text style={styles.prBadgeText}>✦ NEW HEAVIEST</Text>
                 </View>
               ) : null}
               {showRepPr ? (
                 <View style={styles.prBadge}>
-                  <Text style={styles.prBadgeText}>NEW REP PR</Text>
+                  <Text style={styles.prBadgeText}>✦ NEW REP PR</Text>
                 </View>
               ) : null}
               {s.note ? <Text style={styles.setRowNote}>· {s.note}</Text> : null}
@@ -635,7 +636,7 @@ function ExerciseBody({
                 <Text>✎</Text>
               </Pressable>
               <Pressable onPress={() => removeSet(s)} style={styles.setIconBtn}>
-                <Text style={{ color: '#c00' }}>✕</Text>
+                <Text style={{ color: colors.oxblood }}>✕</Text>
               </Pressable>
             </View>
           );
@@ -646,11 +647,11 @@ function ExerciseBody({
 }
 
 function deltaColor(tone: 'up' | 'down' | 'flat'): string {
-  return tone === 'up' ? '#1aa260' : tone === 'down' ? '#c00' : '#999';
+  return tone === 'up' ? colors.verdigris : tone === 'down' ? colors.oxblood : colors.textTertiary;
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.paper },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -658,110 +659,112 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },  backBtn: {
+    borderBottomColor: colors.border,
+    backgroundColor: colors.paper,
+  },
+  backBtn: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     marginRight: 4,
   },
-  backBtnText: { fontSize: 28, lineHeight: 30, color: '#0a7cff', fontWeight: '600' },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
-  headerMeta: { color: '#666', fontSize: 13, marginTop: 2 },
+  backBtnText: { fontSize: 28, lineHeight: 30, color: colors.ink, fontWeight: '600' },
+  headerTitle: { ...type.display, fontSize: 18, fontWeight: '700', color: colors.ink },
+  headerMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
   headerBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#e8f0ff',
+    backgroundColor: colors.paperDeep,
     borderRadius: 6,
   },
-  headerBtnText: { color: '#0a7cff', fontWeight: '600' },
+  headerBtnText: { color: colors.ink, fontWeight: '600' },
   notePreview: {
-    backgroundColor: '#fafafa',
+    backgroundColor: colors.paperWell,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  notePreviewText: { color: '#555', fontStyle: 'italic' },
+  notePreviewText: { color: colors.inkSoft, fontStyle: 'italic' },
   list: { flex: 1 },
   exerciseHeader: {
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.paper,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
   exerciseBody: {
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 8,
-    borderBottomColor: '#f3f3f3',
+    borderBottomColor: colors.borderSubtle,
   },
-  exerciseName: { fontSize: 18, fontWeight: '600' },
+  exerciseName: { fontSize: 18, fontWeight: '600', color: colors.ink },
   referenceBox: {
     marginBottom: 12,
-    backgroundColor: '#fafcff',
+    backgroundColor: colors.paperWell,
     borderRadius: 6,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#eef2f7',
+    borderColor: colors.border,
   },
   referenceHeader: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#666',
+    color: colors.inkSoft,
     textTransform: 'uppercase',
     marginBottom: 2,
   },
-  summaryLine: { fontSize: 12, color: '#555', marginBottom: 6 },
+  summaryLine: { fontSize: 12, color: colors.inkSoft, marginBottom: 6 },
   slotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   slotChip: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.paper,
     borderRadius: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: '#e3e8ef',
+    borderColor: colors.border,
     alignItems: 'center',
   },
-  slotChipGhost: { opacity: 0.55, borderColor: '#ddd', borderStyle: 'dashed' },
-  slotChipWarm: { backgroundColor: '#fbfbfb', borderColor: '#eee' },
-  slotChipPressed: { backgroundColor: '#e8f0ff', borderColor: '#0a7cff' },
-  slotChipIndex: { width: 18, color: '#999', fontSize: 14 },
-  slotChipMain: { fontSize: 14, fontWeight: '500' },
-  slotChipWarmText: { color: '#aaa', fontSize: 14 },
-  ghostLabel: { fontSize: 10, color: '#999' },
+  slotChipGhost: { opacity: 0.55, borderColor: colors.borderStrong, borderStyle: 'dashed' },
+  slotChipWarm: { backgroundColor: colors.paperWell, borderColor: colors.border },
+  slotChipPressed: { backgroundColor: colors.paperDeep, borderColor: colors.ink },
+  slotChipIndex: { width: 18, color: colors.textTertiary, fontSize: 14 },
+  slotChipMain: { ...type.tabular, fontSize: 14, fontWeight: '500', color: colors.ink },
+  slotChipWarmText: { ...type.tabular, color: colors.textDisabled, fontSize: 14 },
+  ghostLabel: { fontSize: 10, color: colors.textTertiary },
   chipDelta: { fontSize: 10, fontWeight: '600' },
   notesToggle: { paddingVertical: 4 },
-  notesToggleText: { fontSize: 12, color: '#0a7cff', fontWeight: '600' },
+  notesToggleText: { fontSize: 12, color: colors.ink, fontWeight: '600' },
   notesBox: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.paper,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: colors.border,
     padding: 8,
     marginTop: 4,
     gap: 4,
   },
-  noteRow: { fontSize: 12, color: '#555' },
+  noteRow: { fontSize: 12, color: colors.inkSoft },
   deltaText: { fontSize: 12, fontWeight: '600' },
   prBadge: {
-    backgroundColor: '#b8860b',
+    backgroundColor: colors.brass,
     borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  prBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  prBadgeText: { color: colors.paper, fontSize: 10, fontWeight: '700' },
   firstTimeBox: {
-    backgroundColor: '#fff8e6',
+    backgroundColor: colors.brassTint,
     borderRadius: 6,
     padding: 10,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#f0e3c2',
+    borderColor: colors.brassBorder,
   },
-  firstTimeText: { color: '#8a6d1c', fontSize: 13 },
+  firstTimeText: { color: colors.brassText, fontSize: 13 },
   setEntryRow: {
     flexDirection: 'row',
     gap: 8,
@@ -771,90 +774,94 @@ const styles = StyleSheet.create({
   setEntryInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.borderStrong,
     borderRadius: 6,
     padding: 10,
     fontSize: 16,
+    color: colors.ink,
   },
   warmupToggle: {
     alignItems: 'center',
   },
-  warmupLabel: { fontSize: 11, color: '#666' },
+  warmupLabel: { fontSize: 11, color: colors.inkSoft },
   noteInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.borderStrong,
     borderRadius: 6,
     padding: 10,
     fontSize: 14,
     marginBottom: 8,
+    color: colors.ink,
   },
-  error: { color: '#c00', marginBottom: 8 },
+  error: { color: colors.oxblood, marginBottom: 8 },
   saveRow: { flexDirection: 'row', gap: 8 },
   cancelBtn: {
     flex: 1,
     padding: 10,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.borderStrong,
     alignItems: 'center',
   },
-  cancelBtnText: { color: '#666', fontWeight: '600' },
+  cancelBtnText: { color: colors.inkSoft, fontWeight: '600' },
   saveBtn: {
     flex: 2,
-    backgroundColor: '#0a7cff',
+    backgroundColor: colors.ink,
     padding: 10,
     borderRadius: 6,
     alignItems: 'center',
   },
   saveBtnEdit: { flex: 2 },
-  saveBtnText: { color: '#fff', fontWeight: '600' },
+  saveBtnText: { color: colors.paper, fontWeight: '600' },
   setList: { marginTop: 12 },
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.borderSubtle,
     gap: 4,
   },
-  setRowIndex: { width: 24, color: '#999' },
-  setRowMain: { fontSize: 16, fontWeight: '500' },
-  setRowNote: { flex: 1, color: '#666', fontSize: 13 },
+  setRowIndex: { ...type.tabular, width: 24, color: colors.textTertiary },
+  setRowMain: { ...type.tabular, fontSize: 16, fontWeight: '500', color: colors.ink },
+  setRowNote: { flex: 1, color: colors.inkSoft, fontSize: 13 },
   setIconBtn: { paddingHorizontal: 8, paddingVertical: 4 },
-  empty: { padding: 24, textAlign: 'center', color: '#999' },
+  empty: { padding: 24, textAlign: 'center', color: colors.textTertiary },
   addExerciseBtn: {
     margin: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#0a7cff',
+    borderColor: colors.ink,
     borderStyle: 'dashed',
     borderRadius: 6,
     alignItems: 'center',
   },
-  addExerciseBtnText: { color: '#0a7cff', fontWeight: '600' },
-  footer: { padding: 16, borderTopWidth: 1, borderTopColor: '#eee' },
+  addExerciseBtnText: { color: colors.ink, fontWeight: '600' },
+  footer: { padding: 16, borderTopWidth: 1, borderTopColor: colors.border },
   completeBtn: {
-    backgroundColor: '#1aa260',
+    backgroundColor: colors.verdigris,
     padding: 14,
     borderRadius: 6,
     alignItems: 'center',
   },
-  completeBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  completeBtnText: { color: colors.paper, fontWeight: '700', fontSize: 16 },
   discardBtn: {
     marginTop: 8,
     padding: 10,
     borderRadius: 6,
     alignItems: 'center',
   },
-  discardBtnText: { color: '#c00', fontWeight: '600' },
+  discardBtnText: { color: colors.oxblood, fontWeight: '600' },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.paper,
   },
-  modalTitle: { fontWeight: '600', fontSize: 16 },
-  modalDone: { color: '#0a7cff', fontWeight: '600' },
+  modalTitle: { fontWeight: '600', fontSize: 16, color: colors.ink },
+  modalDone: { color: colors.ink, fontWeight: '600' },
+  noteModalBody: { padding: 16, flex: 1, backgroundColor: colors.paper },
 });

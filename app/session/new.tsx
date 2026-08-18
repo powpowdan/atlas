@@ -12,6 +12,7 @@ import {
 import { listRoutines, RoutineListItem } from '../../db/queries/routines';
 import { startSessionAdhoc, startSessionFromRoutine } from '../../db/queries/sessions';
 import { useActiveSessionStore } from '../../store/activeSession';
+import { colors, type } from '../../constants/theme';
 
 export default function NewSessionScreen() {
   const db = useSQLiteContext();
@@ -66,27 +67,27 @@ export default function NewSessionScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
-  heading: { fontSize: 22, fontWeight: '700', marginBottom: 12 },
+  container: { flex: 1, backgroundColor: colors.paper, padding: 16 },
+  heading: { ...type.display, fontSize: 22, fontWeight: '700', marginBottom: 12, color: colors.ink },
   primaryBtn: {
-    backgroundColor: '#0a7cff',
+    backgroundColor: colors.ink,
     padding: 14,
     borderRadius: 6,
     alignItems: 'center',
   },
-  primaryBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  primaryBtnText: { color: colors.paper, fontWeight: '600', fontSize: 16 },
   subheading: {
     marginTop: 24,
     marginBottom: 8,
     fontWeight: '600',
-    color: '#666',
+    color: colors.inkSoft,
   },
   routineItem: {
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  routineName: { fontSize: 16, fontWeight: '600' },
-  routineMeta: { color: '#666', fontSize: 13, marginTop: 2 },
-  empty: { padding: 16, color: '#999', textAlign: 'center' },
+  routineName: { fontSize: 16, fontWeight: '600', color: colors.ink },
+  routineMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
+  empty: { padding: 16, color: colors.textTertiary, textAlign: 'center' },
 });

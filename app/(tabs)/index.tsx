@@ -12,6 +12,8 @@ import {
 
 import { deleteSession, getActiveSession } from '../../db/queries/sessions';
 import { useActiveSessionStore } from '../../store/activeSession';
+import { LogoMark } from '../../components/LogoMark';
+import { colors, type } from '../../constants/theme';
 import type { SessionListItem } from '../../db/queries/sessions';
 
 export default function SessionsScreen() {
@@ -100,7 +102,8 @@ export default function SessionsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.startCard}>
-        <Text style={styles.startTitle}>No active session</Text>
+        <LogoMark size={220} />
+        <Text style={styles.wordmark}>ATLAS</Text>
         <Text style={styles.startHelp}>
           Start a new workout, either from a routine or ad-hoc.
         </Text>
@@ -116,31 +119,37 @@ export default function SessionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  container: { flex: 1, backgroundColor: colors.paper, padding: 16 },
   activeCard: {
-    backgroundColor: '#f0f7ff',
+    backgroundColor: colors.paperDeep,
     borderRadius: 8,
     padding: 16,
   },
-  activeTitle: { fontSize: 18, fontWeight: '700' },
-  activeMeta: { color: '#555', fontSize: 13, marginTop: 4, marginBottom: 16 },
+  activeTitle: { fontSize: 18, fontWeight: '700', color: colors.ink },
+  activeMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 4, marginBottom: 16 },
   resumeBtn: {
-    backgroundColor: '#0a7cff',
+    backgroundColor: colors.ink,
     padding: 12,
     borderRadius: 6,
     alignItems: 'center',
   },
-  resumeBtnText: { color: '#fff', fontWeight: '600' },
+  resumeBtnText: { color: colors.paper, fontWeight: '600' },
   discardLink: { marginTop: 8, padding: 8, alignItems: 'center' },
-  discardLinkText: { color: '#c00', fontWeight: '600' },
+  discardLinkText: { color: colors.oxblood, fontWeight: '600' },
   startCard: { alignItems: 'center', marginTop: 24 },
-  startTitle: { fontSize: 18, fontWeight: '600' },
-  startHelp: { color: '#666', textAlign: 'center', marginTop: 4, marginBottom: 16 },
+  wordmark: {
+    ...type.wordmark,
+    fontSize: 22,
+    color: colors.ink,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  startHelp: { color: colors.inkSoft, textAlign: 'center', marginTop: 4, marginBottom: 16 },
   startBtn: {
-    backgroundColor: '#0a7cff',
+    backgroundColor: colors.ink,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 6,
   },
-  startBtnText: { color: '#fff', fontWeight: '600' },
+  startBtnText: { color: colors.paper, fontWeight: '600' },
 });

@@ -17,6 +17,7 @@ import {
   restoreExercise,
 } from '../../db/queries/exercises';
 import { ExerciseEditorModal } from '../../components/ExerciseEditorModal';
+import { colors } from '../../constants/theme';
 import type { Exercise } from '../../types';
 
 function confirmDiscard(message: string, onConfirm: () => void) {
@@ -166,44 +167,44 @@ export default function ManageExercisesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.paper },
   toolbar: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
     alignItems: 'flex-end',
   },
   addBtn: {
-    backgroundColor: '#0a7cff',
+    backgroundColor: colors.ink,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
   },
-  addBtnText: { color: '#fff', fontWeight: '600' },
+  addBtnText: { color: colors.paper, fontWeight: '600' },
   list: { flex: 1 },
   sectionHeader: {
-    backgroundColor: '#f7f7f7',
+    backgroundColor: colors.paperDeep,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#666', letterSpacing: 0.5 },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: colors.inkSoft, letterSpacing: 0.5 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
     gap: 8,
   },
   listItemArchived: { opacity: 0.6 },
-  listItemName: { fontSize: 16, fontWeight: '500' },
-  listItemMeta: { color: '#666', fontSize: 13, marginTop: 2 },
+  listItemName: { fontSize: 16, fontWeight: '500', color: colors.ink },
+  listItemMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
   actions: { flexDirection: 'row', gap: 8 },
   actionBtn: { paddingHorizontal: 10, paddingVertical: 6 },
-  actionEditText: { color: '#0a7cff', fontWeight: '600', fontSize: 13 },
-  actionArchiveText: { color: '#c00', fontWeight: '600', fontSize: 13 },
-  actionRestoreText: { color: '#0a7cff', fontWeight: '600', fontSize: 13 },
-  empty: { padding: 24, textAlign: 'center', color: '#999' },
+  actionEditText: { color: colors.ink, fontWeight: '600', fontSize: 13 },
+  actionArchiveText: { color: colors.oxblood, fontWeight: '600', fontSize: 13 },
+  actionRestoreText: { color: colors.ink, fontWeight: '600', fontSize: 13 },
+  empty: { padding: 24, textAlign: 'center', color: colors.textTertiary },
 });

@@ -11,6 +11,7 @@ import {
 
 import { listSessions, SessionListItem } from '../../db/queries/sessions';
 import { useActiveSessionStore } from '../../store/activeSession';
+import { colors } from '../../constants/theme';
 
 export default function HistoryScreen() {
   const db = useSQLiteContext();
@@ -61,14 +62,14 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.paper },
   listItem: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  listItemDate: { fontSize: 16, fontWeight: '600' },
-  listItemMeta: { color: '#666', fontSize: 13, marginTop: 2 },
+  listItemDate: { fontSize: 16, fontWeight: '600', color: colors.ink },
+  listItemMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
   emptyWrap: { padding: 24, alignItems: 'center' },
-  empty: { color: '#999', textAlign: 'center' },
+  empty: { color: colors.textTertiary, textAlign: 'center' },
 });

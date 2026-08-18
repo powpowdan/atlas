@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 
 import { listRoutines, RoutineListItem } from '../../db/queries/routines';
+import { LogoMark } from '../../components/LogoMark';
+import { colors } from '../../constants/theme';
 
 export default function RoutinesScreen() {
   const db = useSQLiteContext();
@@ -46,6 +48,7 @@ export default function RoutinesScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
+            <LogoMark size={200} />
             <Text style={styles.empty}>No routines yet.</Text>
             <Pressable
               style={styles.button}
@@ -67,25 +70,25 @@ export default function RoutinesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.paper },
   list: { flex: 1 },
   listItem: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  listItemName: { fontSize: 17, fontWeight: '600' },
-  listItemMeta: { color: '#666', fontSize: 13, marginTop: 2 },
+  listItemName: { fontSize: 17, fontWeight: '600', color: colors.ink },
+  listItemMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
   emptyWrap: { padding: 24, alignItems: 'center' },
-  empty: { color: '#999', marginBottom: 16 },
+  empty: { color: colors.textTertiary, marginBottom: 16, marginTop: 12 },
   button: {
-    backgroundColor: '#0a7cff',
+    backgroundColor: colors.ink,
     padding: 12,
     borderRadius: 6,
     alignItems: 'center',
     minWidth: 200,
   },
-  buttonText: { color: '#fff', fontWeight: '600' },
+  buttonText: { color: colors.paper, fontWeight: '600' },
   fab: {
     position: 'absolute',
     right: 16,
@@ -93,10 +96,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#0a7cff',
+    backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 4,
   },
-  fabText: { color: '#fff', fontSize: 28, fontWeight: '400', marginTop: -2 },
+  fabText: { color: colors.paper, fontSize: 28, fontWeight: '400', marginTop: -2 },
 });

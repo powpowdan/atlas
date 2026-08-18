@@ -18,6 +18,7 @@ import {
   updateRoutine,
 } from '../db/queries/routines';
 import { ExercisePickerModal } from './ExercisePickerModal';
+import { colors, type } from '../constants/theme';
 import type { Exercise } from '../types';
 
 interface Props {
@@ -162,7 +163,7 @@ export default function RoutineEditor({ routineId }: Props) {
                 <Text>↓</Text>
               </Pressable>
               <Pressable onPress={() => removeAt(index)} style={styles.iconBtn}>
-                <Text style={{ color: '#c00' }}>✕</Text>
+                <Text style={{ color: colors.oxblood }}>✕</Text>
               </Pressable>
             </View>
           </View>
@@ -192,17 +193,18 @@ export default function RoutineEditor({ routineId }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.paper },
   form: { padding: 16 },
-  label: { fontSize: 13, color: '#666', marginBottom: 4 },
+  label: { fontSize: 13, color: colors.inkSoft, marginBottom: 4 },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.borderStrong,
     borderRadius: 6,
     padding: 10,
     fontSize: 16,
+    color: colors.ink,
   },
-  error: { color: '#c00', marginTop: 8 },
+  error: { color: colors.oxblood, marginTop: 8 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -210,35 +212,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  sectionTitle: { fontWeight: '600', fontSize: 15 },
+  sectionTitle: { fontWeight: '600', fontSize: 15, color: colors.ink },
   addBtn: {
-    backgroundColor: '#e8f0ff',
+    backgroundColor: colors.paperDeep,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
-  addBtnText: { color: '#0a7cff', fontWeight: '600' },
+  addBtnText: { color: colors.ink, fontWeight: '600' },
   list: { flex: 1 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  listItemIndex: { width: 28, color: '#999' },
-  listItemName: { flex: 1, fontSize: 16 },
+  listItemIndex: { ...type.tabular, width: 28, color: colors.textTertiary },
+  listItemName: { flex: 1, fontSize: 16, color: colors.ink },
   listItemActions: { flexDirection: 'row', gap: 4 },
   iconBtn: { paddingHorizontal: 8, paddingVertical: 4 },
-  empty: { padding: 24, textAlign: 'center', color: '#999' },
-  footer: { padding: 16, borderTopWidth: 1, borderTopColor: '#eee' },
+  empty: { padding: 24, textAlign: 'center', color: colors.textTertiary },
+  footer: { padding: 16, borderTopWidth: 1, borderTopColor: colors.border },
   saveBtn: {
-    backgroundColor: '#0a7cff',
+    backgroundColor: colors.ink,
     padding: 14,
     borderRadius: 6,
     alignItems: 'center',
   },
-  saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  saveBtnText: { color: colors.paper, fontWeight: '600', fontSize: 16 },
 });

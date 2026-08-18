@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { deleteSession, getSession, setSessionNote } from '../../db/queries/sessions';
+import { colors, type } from '../../constants/theme';
 import { formatDuration, formatWeightLabel } from '../../utils/format';
 import type { SessionDetail } from '../../types';
 
@@ -174,7 +175,7 @@ export default function HistoryDetailScreen() {
             <Text style={styles.modalDone}>Save</Text>
           </Pressable>
         </View>
-        <View style={{ padding: 16, flex: 1 }}>
+        <View style={{ padding: 16, flex: 1, backgroundColor: colors.paper }}>
           <TextInput
             style={styles.noteInput}
             placeholder="How did the session feel?"
@@ -190,72 +191,74 @@ export default function HistoryDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.paper },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  title: { fontSize: 20, fontWeight: '700' },
-  meta: { color: '#666', fontSize: 13, marginTop: 4 },
+  title: { ...type.display, fontSize: 20, fontWeight: '700', color: colors.ink },
+  meta: { color: colors.inkSoft, fontSize: 13, marginTop: 4 },
   deleteBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#d33',
+    borderColor: colors.oxblood,
     borderRadius: 6,
   },
-  deleteBtnText: { color: '#c00', fontWeight: '600' },
+  deleteBtnText: { color: colors.oxblood, fontWeight: '600' },
   noteWrap: { marginHorizontal: 16, marginTop: 12 },
   noteBox: {
-    backgroundColor: '#fafafa',
+    backgroundColor: colors.paperWell,
     padding: 12,
     borderRadius: 6,
   },
-  noteText: { fontStyle: 'italic', color: '#555' },
+  noteText: { fontStyle: 'italic', color: colors.inkSoft },
   noteEditHint: {
-    color: '#0a7cff',
+    color: colors.ink,
     fontSize: 11,
     marginTop: 6,
     textAlign: 'right',
   },
   noteAddLink: { paddingVertical: 6 },
-  noteAddLinkText: { color: '#0a7cff', fontWeight: '500' },
+  noteAddLinkText: { color: colors.ink, fontWeight: '500' },
   exerciseBlock: {
     padding: 16,
     borderBottomWidth: 8,
-    borderBottomColor: '#f3f3f3',
+    borderBottomColor: colors.borderSubtle,
   },
-  exerciseName: { fontSize: 17, fontWeight: '600', marginBottom: 8 },
+  exerciseName: { fontSize: 17, fontWeight: '600', marginBottom: 8, color: colors.ink },
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
     gap: 4,
   },
-  setRowIndex: { width: 24, color: '#999' },
-  setRowMain: { fontSize: 16, fontWeight: '500' },
-  setRowNote: { flex: 1, color: '#666', fontSize: 13 },
-  empty: { padding: 12, color: '#999', textAlign: 'center' },
+  setRowIndex: { ...type.tabular, width: 24, color: colors.textTertiary },
+  setRowMain: { ...type.tabular, fontSize: 16, fontWeight: '500', color: colors.ink },
+  setRowNote: { flex: 1, color: colors.inkSoft, fontSize: 13 },
+  empty: { padding: 12, color: colors.textTertiary, textAlign: 'center' },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.paper,
   },
-  modalTitle: { fontSize: 16, fontWeight: '600' },
-  modalCancel: { color: '#555', fontSize: 16 },
-  modalDone: { color: '#0a7cff', fontWeight: '600', fontSize: 16 },
+  modalTitle: { fontSize: 16, fontWeight: '600', color: colors.ink },
+  modalCancel: { color: colors.inkSoft, fontSize: 16 },
+  modalDone: { color: colors.ink, fontWeight: '600', fontSize: 16 },
   noteInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.borderStrong,
     borderRadius: 6,
     padding: 10,
     minHeight: 120,
     textAlignVertical: 'top',
+    color: colors.ink,
   },
 });
