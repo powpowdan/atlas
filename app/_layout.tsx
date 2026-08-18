@@ -11,6 +11,7 @@ export default function RootLayout() {
       <SQLiteProvider databaseName="workout.db" onInit={migrateDb}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="session/[id]" options={{ headerShown: false }} />
         </Stack>
       </SQLiteProvider>
     </>

@@ -1,19 +1,20 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
-  FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
+  SectionList,
   StyleSheet,
   Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   addExerciseToSession,
@@ -45,7 +46,7 @@ import type {
 export default function SessionScreen() {
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const clearActiveSession = useActiveSessionStore((s) => s.clearActiveSession);
   const activeSessionId = useActiveSessionStore((s) => s.activeSessionId);
 
@@ -60,17 +61,22 @@ export default function SessionScreen() {
     if (!id) return;
     const detail = await getSession(db, id);
     setSession(detail);
-    if (detail) {
-      navigation.setOptions({ title: detail.routine_name ?? 'Session' });
-    }
     setSessionNoteDraft(detail?.note ?? '');
     setLoading(false);
     setRefreshKey((k) => k + 1);
-  }, [db, id, navigation]);
+  }, [db, id]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  function goBack() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/index');
+    }
+  }
 
   async function handleAddExercise(exerciseId: string) {
     if (!id) return;
@@ -140,9 +146,16 @@ export default function SessionScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={80}
+      keyboardVerticalOffset={0}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: 12 + insets.top }]}>
+        <Pressable
+          style={styles.backBtn}
+          onPress={goBack}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Text style={styles.backBtnText}>‹</Text>
+        </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>
             {session.routine_name ?? 'Ad-hoc'}
@@ -164,13 +177,23 @@ export default function SessionScreen() {
         </View>
       ) : null}
 
-      <FlatList
+      <SectionList
         style={styles.list}
-        data={session.exercises}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ExerciseBlock
-            sessionExercise={item}
+        sections={session.exercises.map(
+          (exercise): ExerciseSection => ({
+            id: exercise.id,
+            exercise,
+            data: [exercise.id],
+          }),
+        )}
+        keyExtractor={(item) => item}
+        stickySectionHeadersEnabled
+        renderSectionHeader={({ section }) => (
+          <ExerciseHeader sessionExercise={section.exercise} />
+        )}
+        renderItem={({ section }) => (
+          <ExerciseBody
+            sessionExercise={section.exercise}
             sessionId={session.id}
             refreshKey={refreshKey}
             onChanged={refresh}
@@ -228,19 +251,42 @@ export default function SessionScreen() {
   );
 }
 
-interface ExerciseBlockProps {
+interface ExerciseSection {
+  id: string;
+  exercise: SessionDetail['exercises'][number];
+  data: string[];
+}
+
+function ExerciseHeader({
+  sessionExercise,
+}: {
+  sessionExercise: SessionDetail['exercises'][number];
+}) {
+  return (
+    <Pressable
+      style={styles.exerciseHeader}
+      onPress={() => router.push(`/exercise/${sessionExercise.exercise_id}`)}
+    >
+      <Text style={styles.exerciseName} numberOfLines={1}>
+        {sessionExercise.exercise?.name}
+      </Text>
+    </Pressable>
+  );
+}
+
+interface ExerciseBodyProps {
   sessionExercise: SessionDetail['exercises'][number];
   sessionId: string;
   refreshKey: number;
   onChanged: () => void;
 }
 
-function ExerciseBlock({
+function ExerciseBody({
   sessionExercise,
   sessionId,
   refreshKey,
   onChanged,
-}: ExerciseBlockProps) {
+}: ExerciseBodyProps) {
   const db = useSQLiteContext();
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
@@ -373,11 +419,7 @@ function ExerciseBlock({
   }
 
   return (
-    <View style={styles.exerciseBlock}>
-      <Pressable onPress={() => router.push(`/exercise/${sessionExercise.exercise_id}`)}>
-        <Text style={styles.exerciseName}>{sessionExercise.exercise?.name}</Text>
-      </Pressable>
-
+    <View style={styles.exerciseBody}>
       {hasHistory ? (
         <View style={styles.referenceBox}>
           {bundle.latestSessionStartedAt != null ? (
@@ -593,10 +635,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },  backBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 4,
   },
+  backBtnText: { fontSize: 28, lineHeight: 30, color: '#0a7cff', fontWeight: '600' },
   headerTitle: { fontSize: 18, fontWeight: '700' },
   headerMeta: { color: '#666', fontSize: 13, marginTop: 2 },
   headerBtn: {
@@ -615,12 +664,21 @@ const styles = StyleSheet.create({
   },
   notePreviewText: { color: '#555', fontStyle: 'italic' },
   list: { flex: 1 },
-  exerciseBlock: {
-    padding: 16,
+  exerciseHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  exerciseBody: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
     borderBottomWidth: 8,
     borderBottomColor: '#f3f3f3',
   },
-  exerciseName: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
+  exerciseName: { fontSize: 18, fontWeight: '600' },
   referenceBox: {
     marginBottom: 12,
     backgroundColor: '#fafcff',
