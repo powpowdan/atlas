@@ -264,6 +264,7 @@ export default function SessionScreen() {
 
       <ExercisePickerModal
         visible={addExerciseOpen}
+        excludeIds={session?.exercises.map((ex) => ex.exercise_id)}
         onSelect={(ex) => handleAddExercise(ex.id)}
         onClose={() => setAddExerciseOpen(false)}
       />

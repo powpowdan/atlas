@@ -101,7 +101,9 @@ export default function RoutineEditor({ routineId }: Props) {
   }
 
   function handlePickerSelect(exercise: Exercise) {
-    setSelected((prev) => [...prev, exercise.id]);
+    setSelected((prev) =>
+      prev.includes(exercise.id) ? prev : [...prev, exercise.id],
+    );
     setSelectedDetails((prev) =>
       prev.some((e) => e.id === exercise.id) ? prev : [...prev, exercise],
     );

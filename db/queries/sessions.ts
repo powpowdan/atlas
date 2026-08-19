@@ -166,6 +166,14 @@ export async function addExerciseToSession(
   sessionId: string,
   exerciseId: string,
 ): Promise<string> {
+  const existing = await db.getFirstAsync<{ id: string }>(
+    `SELECT id FROM session_exercises
+     WHERE session_id = ? AND exercise_id = ?
+     LIMIT 1;`,
+    sessionId,
+    exerciseId,
+  );
+  if (existing) return existing.id;
   const maxRow = await db.getFirstAsync<{ max_order: number | null }>(
     `SELECT MAX(order_index) AS max_order FROM session_exercises WHERE session_id = ?;`,
     sessionId,
