@@ -368,6 +368,7 @@ export default function HistoryDetailScreen() {
                 <TextInput
                   style={styles.setEntryInput}
                   placeholder="Weight"
+                  placeholderTextColor={colors.inkSoft}
                   keyboardType="numeric"
                   value={weight}
                   onChangeText={setWeight}
@@ -375,6 +376,7 @@ export default function HistoryDetailScreen() {
                 <TextInput
                   style={styles.setEntryInput}
                   placeholder="Reps"
+                  placeholderTextColor={colors.inkSoft}
                   keyboardType="numeric"
                   value={reps}
                   onChangeText={setReps}
@@ -387,6 +389,7 @@ export default function HistoryDetailScreen() {
               <TextInput
                 style={styles.setNoteInput}
                 placeholder="Set note (optional)"
+                placeholderTextColor={colors.inkSoft}
                 value={note}
                 onChangeText={setNote}
               />
@@ -442,6 +445,7 @@ export default function HistoryDetailScreen() {
           <TextInput
             style={styles.noteInput}
             placeholder="How did the session feel?"
+            placeholderTextColor={colors.inkSoft}
             value={noteDraft}
             onChangeText={setNoteDraft}
             multiline

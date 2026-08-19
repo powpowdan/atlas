@@ -93,6 +93,7 @@ export function ExercisePickerModal({
             <TextInput
               style={styles.searchInput}
               placeholder="Search exercises"
+              placeholderTextColor={colors.inkSoft}
               value={query}
               onChangeText={setQuery}
             />

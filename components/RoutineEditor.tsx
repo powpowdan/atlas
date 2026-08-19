@@ -127,6 +127,7 @@ export default function RoutineEditor({ routineId }: Props) {
         <TextInput
           style={styles.input}
           placeholder="e.g. Day 1"
+          placeholderTextColor={colors.inkSoft}
           value={name}
           onChangeText={setName}
         />

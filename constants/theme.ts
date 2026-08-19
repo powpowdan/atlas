@@ -4,7 +4,7 @@ export const colors = {
   paper: '#F7F3EA',
   paperDeep: '#EDE7D8',
   paperWell: '#F3EFE3',
-  ink: '#1C1B17',
+  ink: '#2E2A24',
   inkSoft: '#57534A',
   inkFaint: '#3F3B31',
   textTertiary: '#8E887B',
@@ -18,7 +18,7 @@ export const colors = {
   brassText: '#7E611B',
   verdigris: '#44684F',
   oxblood: '#7A2E2E',
-  overlay: 'rgba(28,27,23,0.55)',
+  overlay: 'rgba(46,42,36,0.55)',
 } as const;
 
 export const fonts = {

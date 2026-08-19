@@ -253,6 +253,7 @@ export default function SessionScreen() {
           <TextInput
             style={styles.noteInput}
             placeholder="How did the session feel?"
+            placeholderTextColor={colors.inkSoft}
             value={sessionNoteDraft}
             onChangeText={setSessionNoteDraft}
             multiline
@@ -559,6 +560,7 @@ function ExerciseBody({
           ref={weightRef}
           style={styles.setEntryInput}
           placeholder="Weight"
+          placeholderTextColor={colors.inkSoft}
           keyboardType="numeric"
           returnKeyType="next"
           onSubmitEditing={() => repsRef.current?.focus()}
@@ -569,6 +571,7 @@ function ExerciseBody({
           ref={repsRef}
           style={styles.setEntryInput}
           placeholder="Reps"
+          placeholderTextColor={colors.inkSoft}
           keyboardType="numeric"
           returnKeyType="done"
           onSubmitEditing={() => saveSet()}
@@ -583,6 +586,7 @@ function ExerciseBody({
       <TextInput
         style={styles.noteInput}
         placeholder="Set note (optional)"
+        placeholderTextColor={colors.inkSoft}
         value={note}
         onChangeText={setNote}
       />

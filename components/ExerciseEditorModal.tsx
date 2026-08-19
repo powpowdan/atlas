@@ -104,6 +104,7 @@ export function ExerciseEditorModal({
           <TextInput
             style={styles.input}
             placeholder="Exercise name"
+            placeholderTextColor={colors.inkSoft}
             value={name}
             onChangeText={setName}
             autoFocus={!isEdit}
@@ -111,6 +112,7 @@ export function ExerciseEditorModal({
           <TextInput
             style={styles.input}
             placeholder="Category (optional)"
+            placeholderTextColor={colors.inkSoft}
             value={category}
             onChangeText={setCategory}
           />
