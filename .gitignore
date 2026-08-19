@@ -9,8 +9,5 @@ android/
 .env
 .env.local
 
- 
 openspec/.cache/
-/.opencode/
-/openspec/
-
+.opencode/node_modules/
