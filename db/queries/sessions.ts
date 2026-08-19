@@ -282,6 +282,13 @@ export async function deleteSession(db: SQLiteDatabase, id: string): Promise<voi
   await db.runAsync(`DELETE FROM sessions WHERE id = ?;`, id);
 }
 
+export async function removeExerciseFromSession(
+  db: SQLiteDatabase,
+  sessionExerciseId: string,
+): Promise<void> {
+  await db.runAsync(`DELETE FROM session_exercises WHERE id = ?;`, sessionExerciseId);
+}
+
 export async function setSessionNote(
   db: SQLiteDatabase,
   id: string,
