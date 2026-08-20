@@ -5,7 +5,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   SectionList,
   StyleSheet,
@@ -164,7 +163,7 @@ export default function SessionScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       keyboardVerticalOffset={0}
     >
       <View style={[styles.header, { paddingTop: 12 + insets.top }]}>
@@ -198,6 +197,7 @@ export default function SessionScreen() {
 
       <SectionList
         style={styles.list}
+        keyboardShouldPersistTaps="handled"
         sections={session.exercises.map(
           (exercise): ExerciseSection => ({
             id: exercise.id,
