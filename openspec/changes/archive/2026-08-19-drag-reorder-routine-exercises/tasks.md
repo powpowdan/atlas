@@ -24,13 +24,17 @@
 
 ## 2. On-device verification (user, from PowerShell)
 
-- [ ] 2.1 Long-press a row → it lifts (hover style); dragging slides other
+- [x] 2.1 Long-press a row → it lifts (hover style); dragging slides other
       rows aside; drop commits the new position (index numbers update).
-- [ ] 2.2 Save the routine, reopen it → order persisted.
-- [ ] 2.3 Plain vertical scrolling still works (no drag hijack); ✕ removes;
+      (Verified by user 2026-08-19 across successive device tests; two library
+      bugs found and fixed along the way — see 1.1/1.3 notes.)
+- [x] 2.2 Save the routine, reopen it → order persisted.
+- [x] 2.3 Plain vertical scrolling still works (no drag hijack); ✕ removes;
       + Add still appends; works on both `routine/new` and `routine/[id]`.
+      (Also tuned: `delayLongPress={150}` per user feedback — default 500ms
+      felt too slow.)
 
 ## 3. Wrap-up
 
-- [ ] 3.1 Run `openspec validate drag-reorder-routine-exercises --strict`
+- [x] 3.1 Run `openspec validate drag-reorder-routine-exercises --strict`
       before archive.
