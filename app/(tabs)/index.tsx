@@ -102,7 +102,7 @@ export default function SessionsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.startCard}>
-        <LogoMark size={300} />
+        <LogoMark size={400} />
         <Text style={styles.wordmark}>ATLAS</Text>
         <Text style={styles.startHelp}>
           Start a new workout, either from a routine or ad-hoc.
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     ...type.wordmark,
     fontSize: 22,
     color: colors.ink,
-    marginTop: 12,
+    marginTop: 0,
     marginBottom: 4,
   },
   startHelp: { color: colors.inkSoft, textAlign: 'center', marginTop: 4, marginBottom: 16 },
