@@ -3,8 +3,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
+  Keyboard,
   Modal,
+  Platform,
   Pressable,
   SectionList,
   StyleSheet,
@@ -63,6 +64,24 @@ export default function SessionScreen() {
   const [addExerciseOpen, setAddExerciseOpen] = useState(false);
   const [sessionNoteDraft, setSessionNoteDraft] = useState('');
   const [summary, setSummary] = useState<SessionSummary | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const keyboardVisible = keyboardHeight > 0;
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(
+      showEvent,
+      (e) => setKeyboardHeight(e.endCoordinates.height),
+    );
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const refresh = useCallback(async () => {
     if (!id) return;
@@ -161,11 +180,7 @@ export default function SessionScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior="padding"
-      keyboardVerticalOffset={0}
-    >
+    <View style={styles.container}>
       <View style={[styles.header, { paddingTop: 12 + insets.top }]}>
         <Pressable
           style={styles.backBtn}
@@ -195,52 +210,56 @@ export default function SessionScreen() {
         </View>
       ) : null}
 
-      <SectionList
-        style={styles.list}
-        keyboardShouldPersistTaps="handled"
-        sections={session.exercises.map(
-          (exercise): ExerciseSection => ({
-            id: exercise.id,
-            exercise,
-            data: [exercise.id],
-          }),
-        )}
-        keyExtractor={(item) => item}
-        stickySectionHeadersEnabled
-        renderSectionHeader={({ section }) => (
-          <ExerciseHeader sessionExercise={section.exercise} />
-        )}
-        renderItem={({ section }) => (
-          <ExerciseBody
-            sessionExercise={section.exercise}
-            sessionId={session.id}
-            refreshKey={refreshKey}
-            onChanged={refresh}
-          />
-        )}
-        ListFooterComponent={
-          <Pressable
-            style={styles.addExerciseBtn}
-            onPress={() => setAddExerciseOpen(true)}
-          >
-            <Text style={styles.addExerciseBtnText}>+ Add exercise</Text>
-          </Pressable>
-        }
-        ListEmptyComponent={
-          <Text style={styles.empty}>
-            No exercises in this session yet. Add one to start logging.
-          </Text>
-        }
-      />
-
-      <View style={styles.footer}>
-        <Pressable style={styles.completeBtn} onPress={handleComplete}>
-          <Text style={styles.completeBtnText}>Complete session</Text>
-        </Pressable>
-        <Pressable style={styles.discardBtn} onPress={handleDiscard}>
-          <Text style={styles.discardBtnText}>Discard session</Text>
-        </Pressable>
+      <View style={[styles.listWrap, { paddingBottom: keyboardHeight }]}>
+        <SectionList
+          style={styles.list}
+          keyboardShouldPersistTaps="handled"
+          sections={session.exercises.map(
+            (exercise): ExerciseSection => ({
+              id: exercise.id,
+              exercise,
+              data: [exercise.id],
+            }),
+          )}
+          keyExtractor={(item) => item}
+          stickySectionHeadersEnabled
+          renderSectionHeader={({ section }) => (
+            <ExerciseHeader sessionExercise={section.exercise} />
+          )}
+          renderItem={({ section }) => (
+            <ExerciseBody
+              sessionExercise={section.exercise}
+              sessionId={session.id}
+              refreshKey={refreshKey}
+              onChanged={refresh}
+            />
+          )}
+          ListFooterComponent={
+            <Pressable
+              style={styles.addExerciseBtn}
+              onPress={() => setAddExerciseOpen(true)}
+            >
+              <Text style={styles.addExerciseBtnText}>+ Add exercise</Text>
+            </Pressable>
+          }
+          ListEmptyComponent={
+            <Text style={styles.empty}>
+              No exercises in this session yet. Add one to start logging.
+            </Text>
+          }
+        />
       </View>
+
+      {keyboardVisible ? null : (
+        <View style={[styles.footer, { paddingBottom: 12 + insets.bottom }]}>
+          <Pressable style={styles.completeBtn} onPress={handleComplete}>
+            <Text style={styles.completeBtnText}>Complete session</Text>
+          </Pressable>
+          <Pressable style={styles.discardBtn} onPress={handleDiscard}>
+            <Text style={styles.discardBtnText}>Discard</Text>
+          </Pressable>
+        </View>
+      )}
 
       <Modal visible={noteModalOpen} animationType="slide" presentationStyle="pageSheet">
         <View style={styles.modalHeader}>
@@ -279,7 +298,7 @@ export default function SessionScreen() {
           }}
         />
       ) : null}
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -690,6 +709,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   notePreviewText: { color: colors.inkSoft, fontStyle: 'italic' },
+  listWrap: { flex: 1 },
   list: { flex: 1 },
   exerciseHeader: {
     paddingHorizontal: 16,
@@ -842,8 +862,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addExerciseBtnText: { color: colors.ink, fontWeight: '600' },
-  footer: { padding: 16, borderTopWidth: 1, borderTopColor: colors.border },
+  footer: {
+    flexDirection: 'row',
+    gap: 8,
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
   completeBtn: {
+    flex: 2,
     backgroundColor: colors.verdigris,
     padding: 14,
     borderRadius: 6,
@@ -851,12 +878,15 @@ const styles = StyleSheet.create({
   },
   completeBtnText: { color: colors.paper, fontWeight: '700', fontSize: 16 },
   discardBtn: {
-    marginTop: 8,
-    padding: 10,
+    flex: 1,
+    padding: 14,
     borderRadius: 6,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.oxblood,
   },
-  discardBtnText: { color: colors.oxblood, fontWeight: '600' },
+  discardBtnText: { color: colors.oxblood, fontWeight: '600', fontSize: 15 },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
