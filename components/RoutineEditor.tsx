@@ -2,7 +2,6 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { router, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import DragList from 'react-native-draglist';
 
 import {
   createRoutine,
@@ -34,6 +34,7 @@ export default function RoutineEditor({ routineId }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [listEpoch, setListEpoch] = useState(0);
 
   const isEdit = Boolean(routineId);
 
@@ -78,22 +79,24 @@ export default function RoutineEditor({ routineId }: Props) {
     }
   }
 
-  function moveUp(index: number) {
-    if (index === 0) return;
-    setSelected((prev) => {
-      const next = [...prev];
-      [next[index - 1], next[index]] = [next[index], next[index - 1]];
-      return next;
-    });
-  }
-
-  function moveDown(index: number) {
-    setSelected((prev) => {
-      if (index >= prev.length - 1) return prev;
-      const next = [...prev];
-      [next[index + 1], next[index]] = [next[index], next[index + 1]];
-      return next;
-    });
+  function reorder(from: number, to: number) {
+    if (
+      from === to ||
+      from < 0 ||
+      to < 0 ||
+      from >= selected.length ||
+      to >= selected.length
+    ) {
+      return;
+    }
+    const next = [...selected];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setSelected(next);
+    // Remount the DragList: on Fabric (new arch) the dropped cell's native
+    // layer keeps stale drag transforms and renders blank until the next
+    // drag. A fresh mount rebuilds every cell deterministically.
+    setListEpoch((e) => e + 1);
   }
 
   function removeAt(index: number) {
@@ -148,28 +151,30 @@ export default function RoutineEditor({ routineId }: Props) {
         </Pressable>
       </View>
 
-      <FlatList
+      <DragList
+        key={listEpoch}
         style={styles.list}
+        containerStyle={styles.listContainer}
         data={selected}
-        keyExtractor={(id, idx) => `${id}-${idx}`}
-        renderItem={({ item, index }) => (
-          <View style={styles.listItem}>
+        keyExtractor={(item) => item}
+        onReordered={reorder}
+        renderItem={({ item, index, onDragStart, onDragEnd, isActive }) => (
+          <Pressable
+            style={[styles.listItem, isActive && styles.listItemHover]}
+            onLongPress={onDragStart}
+            onPressOut={onDragEnd}
+            delayLongPress={150}
+          >
             <Text style={styles.listItemIndex}>{index + 1}.</Text>
             <Text style={styles.listItemName}>
               {exerciseNameById.get(item) ?? item}
             </Text>
             <View style={styles.listItemActions}>
-              <Pressable onPress={() => moveUp(index)} style={styles.iconBtn}>
-                <Text>↑</Text>
-              </Pressable>
-              <Pressable onPress={() => moveDown(index)} style={styles.iconBtn}>
-                <Text>↓</Text>
-              </Pressable>
               <Pressable onPress={() => removeAt(index)} style={styles.iconBtn}>
                 <Text style={{ color: colors.oxblood }}>✕</Text>
               </Pressable>
             </View>
-          </View>
+          </Pressable>
         )}
         ListEmptyComponent={
           <Text style={styles.empty}>No exercises added yet.</Text>
@@ -225,6 +230,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   addBtnText: { color: colors.ink, fontWeight: '600' },
+  listContainer: { flex: 1 },
   list: { flex: 1 },
   listItem: {
     flexDirection: 'row',
@@ -232,6 +238,14 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    backgroundColor: colors.paper,
+  },
+  listItemHover: {
+    backgroundColor: colors.paperDeep,
+    borderWidth: 1,
+    borderColor: colors.ink,
+    borderRadius: 6,
+    elevation: 4,
   },
   listItemIndex: { ...type.tabular, width: 28, color: colors.textTertiary },
   listItemName: { flex: 1, fontSize: 16, color: colors.ink },
