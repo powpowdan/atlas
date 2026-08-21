@@ -67,7 +67,7 @@ export default function HistoryDetailScreen() {
       setSession(detail);
       if (detail) {
         navigation.setOptions({
-          title: detail.routine_name ?? 'Past session',
+          title: detail.routine_name ?? 'Ad-hoc',
         });
       }
       setLoading(false);
@@ -272,14 +272,8 @@ export default function HistoryDetailScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>
-            {session.routine_name ?? 'Ad-hoc'}
-          </Text>
-          <Text style={styles.meta}>
+          <Text style={styles.headerDate}>
             {new Date(session.started_at).toLocaleDateString()}
-            {session.completed_at
-              ? ` · completed ${new Date(session.completed_at).toLocaleDateString()}`
-              : ''}
             {durationMs !== null ? ` · ${formatDuration(durationMs)}` : ''}
           </Text>
         </View>
@@ -457,8 +451,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  title: { ...type.title, color: colors.ink },
-  meta: { ...type.meta, color: colors.inkSoft, marginTop: 4 },
+  headerDate: { ...type.heading, color: colors.ink },
   deleteBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
