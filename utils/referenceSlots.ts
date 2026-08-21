@@ -10,6 +10,7 @@ import type {
 } from '../types';
 
 export const GHOST_WINDOW = 3;
+export const PINNED_SLOTS = 4;
 
 function workingSets(session: QualifyingSessionSets): QualifyingSessionSet[] {
   return session.sets.filter((s) => !s.isWarmup);
@@ -69,23 +70,23 @@ const EMPTY_BUNDLE: ReferenceBundle = {
 
 // Builds the during-logging reference view from qualifying sessions, expected
 // newest-first (as returned by getRecentQualifyingSessions). Working-set slots
-// are positional: slot p holds the newest working set at position p within the
-// ghost window; positions absent from the whole window produce no slot.
-// Warmups come from the newest session only and are display-only.
+// are positional: slot p holds the newest working set at position p. Positions
+// 1-PINNED_SLOTS are pinned and search all fetched sessions; positions beyond
+// the pin search only the ghost window and produce no slot when absent from
+// the whole window. Warmups come from the newest session only and are
+// display-only.
 export function buildReferenceBundle(
   sessions: QualifyingSessionSets[],
 ): ReferenceBundle {
   if (sessions.length === 0) return EMPTY_BUNDLE;
 
   const workingAll = sessions.map(workingSets);
-  const maxSlots = Math.max(
-    0,
-    ...workingAll.slice(0, GHOST_WINDOW).map((w) => w.length),
-  );
+  const maxSlots = Math.max(0, ...workingAll.map((w) => w.length));
 
   const slots: ReferenceSlot[] = [];
   for (let pos = 1; pos <= maxSlots; pos++) {
-    for (let age = 0; age < GHOST_WINDOW && age < sessions.length; age++) {
+    const scanDepth = pos <= PINNED_SLOTS ? sessions.length : GHOST_WINDOW;
+    for (let age = 0; age < scanDepth && age < sessions.length; age++) {
       const set = workingAll[age][pos - 1];
       if (set) {
         // Previous occurrence of this position in older fetched sessions

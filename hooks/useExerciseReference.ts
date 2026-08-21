@@ -6,7 +6,7 @@ import {
   getMostRepsSet,
   getRecentQualifyingSessions,
 } from '../db/queries/tracking';
-import { buildReferenceBundle, GHOST_WINDOW } from '../utils/referenceSlots';
+import { buildReferenceBundle } from '../utils/referenceSlots';
 import type { BestLastResult, ReferenceBundle } from '../types';
 
 interface ExerciseReference {
@@ -44,7 +44,12 @@ export function useExerciseReference(
     }
     (async () => {
       const [sessions, heaviest, mostReps] = await Promise.all([
-        getRecentQualifyingSessions(db, exerciseId, currentSessionId, GHOST_WINDOW + 1),
+        getRecentQualifyingSessions(
+          db,
+          exerciseId,
+          currentSessionId,
+          Number.MAX_SAFE_INTEGER,
+        ),
         getBestSet(db, exerciseId, 'working', currentSessionId),
         getMostRepsSet(db, exerciseId, 'working', currentSessionId),
       ]);
