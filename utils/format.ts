@@ -14,3 +14,13 @@ export function formatDuration(ms: number): string {
   const m = totalMin % 60;
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
+
+export function formatStopwatch(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const mm = String(m).padStart(2, '0');
+  const ss = String(s).padStart(2, '0');
+  return h >= 1 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+}

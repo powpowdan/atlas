@@ -27,6 +27,7 @@ import {
   updateSet,
 } from '../../db/queries/sessions';
 import { ExercisePickerModal } from '../../components/ExercisePickerModal';
+import { RestTimer } from '../../components/RestTimer';
 import { SessionSummaryModal } from '../../components/SessionSummaryModal';
 import { useExerciseReference } from '../../hooks/useExerciseReference';
 import { useActiveSessionStore } from '../../store/activeSession';
@@ -224,7 +225,10 @@ export default function SessionScreen() {
           keyExtractor={(item) => item}
           stickySectionHeadersEnabled
           renderSectionHeader={({ section }) => (
-            <ExerciseHeader sessionExercise={section.exercise} />
+            <ExerciseHeader
+              sessionExercise={section.exercise}
+              showRestTimer={session.status === 'in_progress'}
+            />
           )}
           renderItem={({ section }) => (
             <ExerciseBody
@@ -310,9 +314,13 @@ interface ExerciseSection {
 
 function ExerciseHeader({
   sessionExercise,
+  showRestTimer,
 }: {
   sessionExercise: SessionDetail['exercises'][number];
+  showRestTimer: boolean;
 }) {
+  const sets = sessionExercise.sets ?? [];
+  const lastSetTs = sets.length > 0 ? sets[sets.length - 1].created_at : null;
   return (
     <Pressable
       style={styles.exerciseHeader}
@@ -321,6 +329,9 @@ function ExerciseHeader({
       <Text style={styles.exerciseName} numberOfLines={1}>
         {sessionExercise.exercise?.name}
       </Text>
+      {showRestTimer && lastSetTs != null ? (
+        <RestTimer anchorTs={lastSetTs} />
+      ) : null}
     </Pressable>
   );
 }
@@ -712,6 +723,9 @@ const styles = StyleSheet.create({
   listWrap: { flex: 1 },
   list: { flex: 1 },
   exerciseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
