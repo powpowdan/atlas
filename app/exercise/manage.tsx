@@ -1,12 +1,12 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useNavigation } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Modal,
   Platform,
   Pressable,
-  SectionList,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -26,6 +26,7 @@ import {
   normalizeCategory,
   sortCategories,
 } from '../../constants/categories';
+import { AnimatedCategorySection } from '../../components/AnimatedCategorySection';
 import { ExerciseEditorModal } from '../../components/ExerciseEditorModal';
 import { colors } from '../../constants/theme';
 import type { Exercise } from '../../types';
@@ -68,10 +69,33 @@ export default function ManageExercisesScreen() {
   const [categoryActions, setCategoryActions] = useState<string | null>(null);
   const [categoryRenameMode, setCategoryRenameMode] = useState(false);
   const [renameText, setRenameText] = useState('');
+  const [revealTarget, setRevealTarget] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const headerY = useRef(new Map<string, number>()).current;
 
   useEffect(() => {
     navigation.setOptions({ title: 'Exercise library' });
   }, []);
+
+  useEffect(() => {
+    headerY.clear();
+  }, [filter, headerY]);
+
+  useEffect(() => {
+    if (!revealTarget) return;
+    setRevealTarget(null);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const y = headerY.get(revealTarget);
+        if (y !== undefined) {
+          scrollRef.current?.scrollTo({
+            y: Math.max(0, y - 12),
+            animated: true,
+          });
+        }
+      });
+    });
+  }, [revealTarget, headerY]);
 
   const refresh = useCallback(async () => {
     const rows = await listExercises(db, { includeArchived: true });
@@ -112,7 +136,7 @@ export default function ManageExercisesScreen() {
     (category) => ({
       category,
       count: byCategory.get(category)!.length,
-      data: expanded.has(category) ? byCategory.get(category)! : [],
+      data: byCategory.get(category)!,
     }),
   );
 
@@ -126,10 +150,65 @@ export default function ManageExercisesScreen() {
     setEditorOpen(true);
   }
 
-  function handleSaved() {
+  async function handleSaved(saved: Exercise) {
     setEditorOpen(false);
     setEditing(undefined);
-    refresh();
+    await refresh();
+    const category = saved.category;
+    if (!category) return;
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.add(category);
+      return next;
+    });
+    setRevealTarget(category);
+  }
+
+  function renderRow(item: Exercise) {
+    return (
+      <View
+        key={item.id}
+        style={[
+          styles.listItem,
+          item.archived_at !== null && styles.listItemArchived,
+        ]}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={styles.listItemName}>{item.name}</Text>
+        </View>
+        {item.archived_at === null ? (
+          <View style={styles.actions}>
+            <Pressable
+              style={styles.actionBtn}
+              onPress={() => openEdit(item)}
+            >
+              <Text style={styles.actionEditText}>Edit</Text>
+            </Pressable>
+            <Pressable
+              style={styles.actionBtn}
+              onPress={() => handleArchive(item)}
+            >
+              <Text style={styles.actionArchiveText}>Archive</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.actions}>
+            <Pressable
+              style={styles.actionBtn}
+              onPress={() => handleRestore(item)}
+            >
+              <Text style={styles.actionRestoreText}>Restore</Text>
+            </Pressable>
+            <Pressable
+              style={styles.actionBtn}
+              onPress={() => handleDelete(item)}
+            >
+              <Text style={styles.actionArchiveText}>Delete</Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    );
   }
 
   function handleArchive(ex: Exercise) {
@@ -237,89 +316,34 @@ export default function ManageExercisesScreen() {
           <Text style={styles.addBtnText}>+ New exercise</Text>
         </Pressable>
       </View>
-      <SectionList
-        style={styles.list}
-        sections={sections}
-        keyExtractor={(item) => item.id}
-        renderSectionHeader={({ section }) => (
-          <Pressable
-            style={styles.sectionHeader}
-            onPress={() => toggleExpanded(section.category)}
+      <ScrollView style={styles.list} ref={scrollRef}>
+        {sections.map((section) => (
+          <AnimatedCategorySection
+            key={section.category}
+            title={section.category || 'Uncategorized'}
+            count={section.count}
+            expanded={expanded.has(section.category)}
+            onToggle={() => toggleExpanded(section.category)}
             onLongPress={
               section.category
                 ? () => openCategoryActions(section.category)
                 : undefined
             }
+            showMenu={Platform.OS === 'web' && !!section.category}
+            onMenu={() => openCategoryActions(section.category)}
+            onHeaderLayout={(y) => headerY.set(section.category, y)}
           >
-            <Text style={styles.sectionChevron}>
-              {expanded.has(section.category) ? '▾' : '▸'}
-            </Text>
-            <Text style={styles.sectionTitle}>
-              {section.category || 'Uncategorized'}
-            </Text>
-            <Text style={styles.sectionCount}>{section.count}</Text>
-            {Platform.OS === 'web' && section.category ? (
-              <Pressable
-                style={styles.sectionMenuBtn}
-                hitSlop={8}
-                onPress={() => openCategoryActions(section.category)}
-              >
-                <Text style={styles.sectionMenu}>⋯</Text>
-              </Pressable>
-            ) : null}
-          </Pressable>
-        )}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.listItem,
-              item.archived_at !== null && styles.listItemArchived,
-            ]}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.listItemName}>{item.name}</Text>
-            </View>
-            {item.archived_at === null ? (
-              <View style={styles.actions}>
-                <Pressable
-                  style={styles.actionBtn}
-                  onPress={() => openEdit(item)}
-                >
-                  <Text style={styles.actionEditText}>Edit</Text>
-                </Pressable>
-                <Pressable
-                  style={styles.actionBtn}
-                  onPress={() => handleArchive(item)}
-                >
-                  <Text style={styles.actionArchiveText}>Archive</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <View style={styles.actions}>
-                <Pressable
-                  style={styles.actionBtn}
-                  onPress={() => handleRestore(item)}
-                >
-                  <Text style={styles.actionRestoreText}>Restore</Text>
-                </Pressable>
-                <Pressable
-                  style={styles.actionBtn}
-                  onPress={() => handleDelete(item)}
-                >
-                  <Text style={styles.actionArchiveText}>Delete</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        )}
-        ListEmptyComponent={
+            {section.data.map((item) => renderRow(item))}
+          </AnimatedCategorySection>
+        ))}
+        {sections.length === 0 ? (
           <Text style={styles.empty}>
             {filter === 'archived'
               ? 'No archived exercises.'
               : 'No exercises yet. Tap "+ New exercise" above.'}
           </Text>
-        }
-      />
+        ) : null}
+      </ScrollView>
       <Modal
         visible={categoryActions !== null}
         transparent
@@ -429,21 +453,6 @@ const styles = StyleSheet.create({
   },
   addBtnText: { color: colors.paper, fontWeight: '600' },
   list: { flex: 1 },
-  sectionHeader: {
-    backgroundColor: colors.paperDeep,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  sectionChevron: { color: colors.inkSoft, fontSize: 12 },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.inkSoft, letterSpacing: 0.5, flex: 1 },
-  sectionCount: { color: colors.textTertiary, fontSize: 12 },
-  sectionMenuBtn: { paddingHorizontal: 6, paddingVertical: 2 },
-  sectionMenu: { color: colors.inkSoft, fontSize: 14 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
