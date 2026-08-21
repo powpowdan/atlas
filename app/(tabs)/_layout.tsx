@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 
 import { TabIcon } from '../../components/TabIcon';
-import { colors, fonts } from '../../constants/theme';
+import { colors, type } from '../../constants/theme';
 
 export default function TabsLayout() {
   return (
@@ -10,7 +10,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.ink,
         tabBarStyle: { backgroundColor: colors.paper },
         headerStyle: { backgroundColor: colors.paper },
-        headerTitleStyle: { fontFamily: fonts.display, fontWeight: '600' },
+        headerTitleStyle: type.title,
       }}
     >
       <Tabs.Screen

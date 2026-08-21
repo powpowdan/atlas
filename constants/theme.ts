@@ -26,11 +26,37 @@ export const fonts = {
 } as const;
 
 export const type = {
-  display: { fontFamily: fonts.display } as TextStyle,
   wordmark: {
     fontFamily: fonts.display,
+    fontSize: 22,
     textTransform: 'uppercase',
     letterSpacing: 3,
   } as TextStyle,
+  title: { fontFamily: fonts.display, fontSize: 20 },
+  heroStat: {
+    fontSize: 34,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  } as TextStyle,
+  heading: { fontSize: 17, fontWeight: '600' } as TextStyle,
+  modalTitle: { fontSize: 16, fontWeight: '600' } as TextStyle,
+  cta: { fontSize: 16, fontWeight: '600' } as TextStyle,
+  stat: {
+    fontSize: 16,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
+  } as TextStyle,
+  body: { fontSize: 14, lineHeight: 20 } as TextStyle,
+  action: { fontSize: 14, fontWeight: '600' } as TextStyle,
+  meta: { fontSize: 13 } as TextStyle,
+  sectionHeader: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5 } as TextStyle,
+  eyebrow: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  } as TextStyle,
+  caption: { fontSize: 12, lineHeight: 16 } as TextStyle,
+  micro: { fontSize: 10, fontWeight: '600' } as TextStyle,
   tabular: { fontVariant: ['tabular-nums'] } as TextStyle,
 };

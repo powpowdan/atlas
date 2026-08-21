@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Line, Path, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
-import { colors } from '../constants/theme';
+import { colors, type } from '../constants/theme';
 import type { ProgressionMetric, ProgressionPoint } from '../types';
 
 interface ProgressionChartProps {
@@ -263,11 +263,11 @@ function ChartDot({ cx, cy, isPr, tickLabel, showTickLabel, onPress }: ChartDotP
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 8, paddingTop: 8 },
   axisLabel: {
-    fontSize: 11,
+    ...type.caption,
     color: colors.textTertiary,
     marginLeft: 36,
     marginBottom: 4,
   },
   emptyWrap: { padding: 24, alignItems: 'center' },
-  empty: { color: colors.textTertiary, textAlign: 'center' },
+  empty: { ...type.body, color: colors.textTertiary, textAlign: 'center' },
 });

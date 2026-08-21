@@ -68,18 +68,18 @@ export default function NewSessionScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paper, padding: 16 },
-  heading: { ...type.display, fontSize: 22, fontWeight: '700', marginBottom: 12, color: colors.ink },
+  heading: { ...type.title, marginBottom: 12, color: colors.ink },
   primaryBtn: {
     backgroundColor: colors.ink,
     padding: 14,
     borderRadius: 6,
     alignItems: 'center',
   },
-  primaryBtnText: { color: colors.paper, fontWeight: '600', fontSize: 16 },
+  primaryBtnText: { ...type.cta, color: colors.paper },
   subheading: {
     marginTop: 24,
     marginBottom: 8,
-    fontWeight: '600',
+    ...type.sectionHeader,
     color: colors.inkSoft,
   },
   routineItem: {
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  routineName: { fontSize: 16, fontWeight: '600', color: colors.ink },
-  routineMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
-  empty: { padding: 16, color: colors.textTertiary, textAlign: 'center' },
+  routineName: { ...type.heading, color: colors.ink },
+  routineMeta: { ...type.meta, color: colors.inkSoft, marginTop: 2 },
+  empty: { ...type.body, padding: 16, color: colors.textTertiary, textAlign: 'center' },
 });

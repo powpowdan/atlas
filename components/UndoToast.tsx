@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '../constants/theme';
+import { colors, type } from '../constants/theme';
 import { useUndoStore } from '../store/undo';
 
 const TIMING = { duration: 200, easing: Easing.out(Easing.cubic) };
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
   },
-  label: { flex: 1, fontSize: 14, color: colors.ink },
+  label: { ...type.body, flex: 1, color: colors.ink },
   undoBtn: { paddingHorizontal: 8, paddingVertical: 4 },
-  undoText: { fontSize: 14, fontWeight: '700', color: colors.verdigris },
+  undoText: { ...type.action, color: colors.verdigris },
 });

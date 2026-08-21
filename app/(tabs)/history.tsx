@@ -11,7 +11,7 @@ import {
 
 import { listSessions, SessionListItem } from '../../db/queries/sessions';
 import { useActiveSessionStore } from '../../store/activeSession';
-import { colors } from '../../constants/theme';
+import { colors, type } from '../../constants/theme';
 
 export default function HistoryScreen() {
   const db = useSQLiteContext();
@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  listItemDate: { fontSize: 16, fontWeight: '600', color: colors.ink },
-  listItemMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
+  listItemDate: { ...type.heading, color: colors.ink },
+  listItemMeta: { ...type.meta, color: colors.inkSoft, marginTop: 2 },
   emptyWrap: { padding: 24, alignItems: 'center' },
-  empty: { color: colors.textTertiary, textAlign: 'center' },
+  empty: { ...type.body, color: colors.textTertiary, textAlign: 'center' },
 });

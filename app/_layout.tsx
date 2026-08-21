@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { migrateDb } from '../db/client';
-import { colors, fonts } from '../constants/theme';
+import { colors, type } from '../constants/theme';
 import { ConfirmSheet } from '../components/ConfirmSheet';
 import { UndoToast } from '../components/UndoToast';
 
@@ -22,7 +22,7 @@ export default function RootLayout() {
         <Stack
           screenOptions={{
             headerStyle: { backgroundColor: colors.paper },
-            headerTitleStyle: { fontFamily: fonts.display, fontWeight: '600' },
+            headerTitleStyle: type.title,
             headerTintColor: colors.ink,
             contentStyle: { backgroundColor: colors.paper },
           }}

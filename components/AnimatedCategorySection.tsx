@@ -14,7 +14,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { colors } from '../constants/theme';
+import { colors, type } from '../constants/theme';
 
 const TIMING = { duration: 200, easing: Easing.out(Easing.cubic) };
 
@@ -112,17 +112,15 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   chevronWrap: { width: 12, height: 12, alignItems: 'center', justifyContent: 'center' },
-  chevron: { color: colors.inkSoft, fontSize: 12, lineHeight: 12 },
+  chevron: { ...type.caption, lineHeight: 12, color: colors.inkSoft },
   title: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...type.sectionHeader,
     color: colors.inkSoft,
-    letterSpacing: 0.5,
     flex: 1,
   },
-  count: { color: colors.textTertiary, fontSize: 12 },
+  count: { ...type.caption, color: colors.textTertiary },
   menuBtn: { paddingHorizontal: 6, paddingVertical: 2 },
-  menu: { color: colors.inkSoft, fontSize: 14 },
+  menu: { ...type.body, color: colors.inkSoft },
   body: { overflow: 'hidden' },
   // Absolutely positioned so the content measures its natural height even
   // while the animated wrapper is collapsed to 0 — Android/Yoga would

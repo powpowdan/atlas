@@ -16,7 +16,7 @@ import {
 } from '../../db/queries/routines';
 import { LogoMark } from '../../components/LogoMark';
 import { confirm } from '../../store/confirm';
-import { colors } from '../../constants/theme';
+import { colors, type } from '../../constants/theme';
 
 export default function RoutinesScreen() {
   const db = useSQLiteContext();
@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  listItemName: { fontSize: 17, fontWeight: '600', color: colors.ink },
-  listItemMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
+  listItemName: { ...type.heading, color: colors.ink },
+  listItemMeta: { ...type.meta, color: colors.inkSoft, marginTop: 2 },
   libraryStrip: {
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -121,15 +121,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  libraryLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.inkSoft,
-    letterSpacing: 0.5,
-  },
-  libraryChevron: { color: colors.textTertiary, fontSize: 16 },
+  libraryLabel: { ...type.sectionHeader, color: colors.inkSoft },
+  libraryChevron: { ...type.body, color: colors.textTertiary },
   emptyWrap: { padding: 24, alignItems: 'center' },
-  empty: { color: colors.textTertiary, marginBottom: 16, marginTop: 12 },
+  empty: { ...type.body, color: colors.textTertiary, marginBottom: 16, marginTop: 12 },
   button: {
     backgroundColor: colors.ink,
     padding: 12,
@@ -137,7 +132,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minWidth: 200,
   },
-  buttonText: { color: colors.paper, fontWeight: '600' },
+  buttonText: { ...type.cta, color: colors.paper },
   fab: {
     position: 'absolute',
     right: 16,
@@ -150,5 +145,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     elevation: 4,
   },
-  fabText: { color: colors.paper, fontSize: 28, fontWeight: '400', marginTop: -2 },
+  fabText: { ...type.heroStat, color: colors.paper, marginTop: -2 },
 });

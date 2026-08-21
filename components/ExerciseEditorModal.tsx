@@ -17,7 +17,7 @@ import {
   sortCategories,
   suggestCategory,
 } from '../constants/categories';
-import { colors } from '../constants/theme';
+import { colors, type } from '../constants/theme';
 import {
   DuplicateExerciseError,
   type Exercise,
@@ -254,9 +254,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  modalTitle: { fontSize: 16, fontWeight: '600', color: colors.ink },
-  modalCancel: { color: colors.inkSoft, fontSize: 16 },
-  modalDone: { color: colors.ink, fontWeight: '600', fontSize: 16 },
+  modalTitle: { ...type.modalTitle, color: colors.ink },
+  modalCancel: { ...type.action, color: colors.inkSoft },
+  modalDone: { ...type.cta, color: colors.ink },
   modalDoneDisabled: { color: colors.textDisabled },
   body: { padding: 16 },
   input: {
@@ -265,9 +265,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 16,
+    ...type.body,
     color: colors.ink,
   },
-  label: { color: colors.inkSoft, fontSize: 13, marginBottom: 8 },
+  label: { ...type.meta, color: colors.inkSoft, marginBottom: 8 },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ink,
     borderColor: colors.ink,
   },
-  chipText: { color: colors.inkSoft, fontSize: 13, fontWeight: '500' },
+  chipText: { ...type.meta, color: colors.inkSoft, fontWeight: '500' },
   chipTextActive: { color: colors.paper, fontWeight: '600' },
   chipNew: {
     paddingHorizontal: 12,
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderStyle: 'dashed',
   },
-  chipNewText: { color: colors.inkSoft, fontSize: 13, fontWeight: '600' },
+  chipNewText: { ...type.action, color: colors.inkSoft },
   newCategoryWrap: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -307,8 +308,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     width: 160,
+    ...type.body,
     color: colors.ink,
-    fontSize: 13,
   },
   newCategoryAdd: {
     backgroundColor: colors.ink,
@@ -316,7 +317,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
   },
-  newCategoryAddText: { color: colors.paper, fontSize: 13, fontWeight: '600' },
+  newCategoryAddText: { ...type.action, color: colors.paper },
   suggestionRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -324,14 +325,14 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 12,
   },
-  suggestionText: { color: colors.inkSoft, fontSize: 13 },
+  suggestionText: { ...type.meta, color: colors.inkSoft },
   suggestionUse: {
     backgroundColor: colors.ink,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
   },
-  suggestionUseText: { color: colors.paper, fontSize: 12, fontWeight: '600' },
+  suggestionUseText: { ...type.action, color: colors.paper },
   suggestionKeep: {
     borderWidth: 1,
     borderColor: colors.borderStrong,
@@ -339,6 +340,6 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 6,
   },
-  suggestionKeepText: { color: colors.ink, fontSize: 12, fontWeight: '600' },
-  error: { color: colors.oxblood, marginTop: 12 },
+  suggestionKeepText: { ...type.action, color: colors.ink },
+  error: { ...type.body, color: colors.oxblood, marginTop: 12 },
 });

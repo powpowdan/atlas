@@ -18,7 +18,7 @@ import { sortCategories } from '../constants/categories';
 import type { Exercise } from '../types';
 import { ExerciseEditorModal } from './ExerciseEditorModal';
 import { LogoMark } from './LogoMark';
-import { colors } from '../constants/theme';
+import { colors, type } from '../constants/theme';
 
 interface ExercisePickerModalProps {
   visible: boolean;
@@ -213,11 +213,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  modalTitle: { fontSize: 16, fontWeight: '600', color: colors.ink },
-  modalCancel: { color: colors.inkSoft, fontSize: 16 },
+  modalTitle: { ...type.modalTitle, color: colors.ink },
+  modalCancel: { ...type.action, color: colors.inkSoft },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  modalManage: { color: colors.inkSoft, fontSize: 16 },
-  modalNew: { color: colors.ink, fontWeight: '600', fontSize: 16 },
+  modalManage: { ...type.action, color: colors.inkSoft },
+  modalNew: { ...type.cta, color: colors.ink },
   searchWrap: { padding: 12 },
   searchInput: {
     borderWidth: 1,
@@ -225,6 +225,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    ...type.body,
     color: colors.ink,
   },
   sectionHeader: {
@@ -234,21 +235,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: colors.inkSoft, letterSpacing: 0.5 },
+  sectionTitle: { ...type.sectionHeader, color: colors.inkSoft },
   pickerItem: {
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  pickerItemName: { fontSize: 16, fontWeight: '500', color: colors.ink },
-  pickerItemMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
+  pickerItemName: { ...type.heading, color: colors.ink },
+  pickerItemMeta: { ...type.meta, color: colors.inkSoft, marginTop: 2 },
   emptyWrap: { padding: 24, alignItems: 'center' },
-  empty: { color: colors.textTertiary, textAlign: 'center', marginVertical: 12 },
+  empty: { ...type.body, color: colors.textTertiary, textAlign: 'center', marginVertical: 12 },
   emptyCreateBtn: {
     backgroundColor: colors.ink,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 6,
   },
-  emptyCreateBtnText: { color: colors.paper, fontWeight: '600' },
+  emptyCreateBtnText: { ...type.cta, color: colors.paper },
 });

@@ -203,7 +203,7 @@ export default function RoutineEditor({ routineId }: Props) {
             </Text>
             <View style={styles.listItemActions}>
               <Pressable onPress={() => removeAt(index)} style={styles.iconBtn}>
-                <Text style={{ color: colors.oxblood }}>✕</Text>
+                <Text style={styles.iconBtnText}>✕</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -240,16 +240,16 @@ export default function RoutineEditor({ routineId }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paper },
   form: { padding: 16 },
-  label: { fontSize: 13, color: colors.inkSoft, marginBottom: 4 },
+  label: { ...type.meta, color: colors.inkSoft, marginBottom: 4 },
   input: {
     borderWidth: 1,
     borderColor: colors.borderStrong,
     borderRadius: 6,
     padding: 10,
-    fontSize: 16,
+    ...type.body,
     color: colors.ink,
   },
-  error: { color: colors.oxblood, marginTop: 8 },
+  error: { ...type.body, color: colors.oxblood, marginTop: 8 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -259,14 +259,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  sectionTitle: { fontWeight: '600', fontSize: 15, color: colors.ink },
+  sectionTitle: { ...type.sectionHeader, color: colors.ink },
   addBtn: {
     backgroundColor: colors.paperDeep,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
-  addBtnText: { color: colors.ink, fontWeight: '600' },
+  addBtnText: { ...type.action, color: colors.ink },
   listContainer: { flex: 1 },
   list: { flex: 1 },
   listItem: {
@@ -284,11 +284,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     elevation: 4,
   },
-  listItemIndex: { ...type.tabular, width: 28, color: colors.textTertiary },
-  listItemName: { flex: 1, fontSize: 16, color: colors.ink },
+  listItemIndex: { ...type.stat, width: 28, color: colors.textTertiary },
+  listItemName: { ...type.heading, flex: 1, color: colors.ink },
   listItemActions: { flexDirection: 'row', gap: 4 },
   iconBtn: { paddingHorizontal: 8, paddingVertical: 4 },
-  empty: { padding: 24, textAlign: 'center', color: colors.textTertiary },
+  iconBtnText: { ...type.action, color: colors.oxblood },
+  empty: { ...type.body, padding: 24, textAlign: 'center', color: colors.textTertiary },
   footer: { padding: 16, borderTopWidth: 1, borderTopColor: colors.border },
   saveBtn: {
     backgroundColor: colors.ink,
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
   },
-  saveBtnText: { color: colors.paper, fontWeight: '600', fontSize: 16 },
+  saveBtnText: { ...type.cta, color: colors.paper },
   deleteBtn: { marginTop: 12, alignItems: 'center', padding: 8 },
-  deleteBtnText: { color: colors.oxblood, fontWeight: '600', fontSize: 15 },
+  deleteBtnText: { ...type.action, color: colors.oxblood },
 });

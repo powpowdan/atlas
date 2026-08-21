@@ -28,9 +28,7 @@ export const RestTimer = React.memo(RestTimerBase);
 
 const styles = StyleSheet.create({
   text: {
-    ...type.tabular,
-    fontSize: 13,
-    fontWeight: '600',
+    ...type.stat,
     color: colors.inkSoft,
     marginLeft: 8,
   },

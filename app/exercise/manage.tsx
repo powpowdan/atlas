@@ -29,7 +29,7 @@ import { AnimatedCategorySection } from '../../components/AnimatedCategorySectio
 import { ExerciseEditorModal } from '../../components/ExerciseEditorModal';
 import { confirm } from '../../store/confirm';
 import { showUndoToast } from '../../store/undo';
-import { colors } from '../../constants/theme';
+import { colors, type } from '../../constants/theme';
 import type { Exercise } from '../../types';
 
 type Filter = 'active' | 'archived';
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   },
   filterBtn: { paddingHorizontal: 14, paddingVertical: 6 },
   filterBtnActive: { backgroundColor: colors.ink },
-  filterBtnText: { color: colors.inkSoft, fontSize: 13, fontWeight: '600' },
+  filterBtnText: { ...type.action, color: colors.inkSoft },
   filterBtnTextActive: { color: colors.paper },
   addBtn: {
     backgroundColor: colors.ink,
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 6,
   },
-  addBtnText: { color: colors.paper, fontWeight: '600' },
+  addBtnText: { ...type.cta, color: colors.paper },
   list: { flex: 1 },
   searchWrap: { padding: 12 },
   searchInput: {
@@ -475,6 +475,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    ...type.body,
     color: colors.ink,
   },
   listItem: {
@@ -486,13 +487,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   listItemArchived: { opacity: 0.6 },
-  listItemName: { fontSize: 16, fontWeight: '500', color: colors.ink },
+  listItemName: { ...type.heading, color: colors.ink },
   actions: { flexDirection: 'row', gap: 8 },
   actionBtn: { paddingHorizontal: 10, paddingVertical: 6 },
-  actionEditText: { color: colors.ink, fontWeight: '600', fontSize: 13 },
-  actionArchiveText: { color: colors.oxblood, fontWeight: '600', fontSize: 13 },
-  actionRestoreText: { color: colors.ink, fontWeight: '600', fontSize: 13 },
-  empty: { padding: 24, textAlign: 'center', color: colors.textTertiary },
+  actionEditText: { ...type.action, color: colors.ink },
+  actionArchiveText: { ...type.action, color: colors.oxblood },
+  actionRestoreText: { ...type.action, color: colors.ink },
+  empty: { ...type.body, padding: 24, textAlign: 'center', color: colors.textTertiary },
   categoryOverlay: {
     flex: 1,
     backgroundColor: colors.overlay,
@@ -508,29 +509,25 @@ const styles = StyleSheet.create({
     maxWidth: 360,
   },
   categorySheetTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    ...type.sectionHeader,
     color: colors.ink,
     marginBottom: 4,
   },
   categoryActionRow: { paddingVertical: 12 },
-  categoryActionText: { fontSize: 15, color: colors.ink, fontWeight: '600' },
-  categoryActionDeleteText: {
-    fontSize: 15,
-    color: colors.oxblood,
-    fontWeight: '600',
-  },
-  categoryActionMutedText: { fontSize: 15, color: colors.inkSoft },
+  categoryActionText: { ...type.action, color: colors.ink },
+  categoryActionDeleteText: { ...type.action, color: colors.oxblood },
+  categoryActionMutedText: { ...type.body, color: colors.inkSoft },
   categoryInput: {
     borderWidth: 1,
     borderColor: colors.borderStrong,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 8,
+    ...type.body,
     color: colors.ink,
     marginTop: 4,
   },
-  categoryHint: { color: colors.inkSoft, fontSize: 12, marginTop: 8 },
+  categoryHint: { ...type.caption, color: colors.inkSoft, marginTop: 8 },
   categoryRenameActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -543,7 +540,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 6,
   },
-  categoryRenameBtnText: { color: colors.paper, fontWeight: '600' },
+  categoryRenameBtnText: { ...type.cta, color: colors.paper },
   categoryRenameCancel: {
     backgroundColor: 'transparent',
     borderWidth: 1,

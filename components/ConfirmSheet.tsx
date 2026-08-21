@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '../constants/theme';
+import { colors, type } from '../constants/theme';
 import { useConfirmStore, type ConfirmOptions } from '../store/confirm';
 
 const TIMING = { duration: 200, easing: Easing.out(Easing.cubic) };
@@ -103,21 +103,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   title: {
-    fontSize: 15,
-    fontWeight: '700',
+    ...type.modalTitle,
     color: colors.ink,
     marginBottom: 4,
   },
   messageScroll: { flexGrow: 0 },
   messageContent: { paddingBottom: 4 },
   message: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...type.body,
     color: colors.inkSoft,
   },
   detail: {
-    fontSize: 12,
-    lineHeight: 16,
+    ...type.caption,
     color: colors.textTertiary,
     marginTop: 8,
   },
@@ -128,6 +125,6 @@ const styles = StyleSheet.create({
     borderTopColor: colors.borderSubtle,
     marginTop: 4,
   },
-  confirmText: { fontSize: 15, fontWeight: '700', color: colors.oxblood },
-  cancelText: { fontSize: 15, fontWeight: '600', color: colors.inkSoft },
+  confirmText: { ...type.action, color: colors.oxblood },
+  cancelText: { ...type.action, color: colors.inkSoft },
 });

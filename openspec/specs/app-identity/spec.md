@@ -27,7 +27,7 @@ The app SHALL define a single semantic color palette and apply it across all scr
 
 ### Requirement: Display typography uses Fraunces
 
-The app SHALL use the Fraunces typeface for the ATLAS wordmark, screen headers, and hero numerals (large weight/reps figures), rendered in uppercase with letter-spacing for the wordmark. Dense data (set logs, lists, metadata) SHALL use the system font with tabular figure alignment.
+The app SHALL use the Fraunces typeface only for the ATLAS wordmark (rendered in uppercase with letter-spacing) and screen titles, always as the single 600 weight with no additional weight declared. All other text — including hero numerals (large weight/reps/volume figures) and dense data (set logs, lists, metadata) — SHALL use the system font, with tabular figure alignment on all numeric text. Full role definitions (sizes, weights, tracking, line heights) SHALL come from the typography capability's type scale.
 
 #### Scenario: Wordmark rendering
 
@@ -38,6 +38,11 @@ The app SHALL use the Fraunces typeface for the ATLAS wordmark, screen headers, 
 
 - **WHEN** set rows, session summaries, or chart axis labels render numeric data
 - **THEN** digits align in columns using tabular figures with the system font
+
+#### Scenario: Hero numerals are not Fraunces
+
+- **WHEN** a hero figure such as the session-summary total volume renders
+- **THEN** it renders in the system font with tabular figures, not in Fraunces
 
 ### Requirement: Recolorable logo mark with size tiers
 
