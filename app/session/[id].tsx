@@ -374,6 +374,14 @@ function ExerciseBody({
     .filter((s) => !s.is_warmup)
     .forEach((s, i) => workingIndexById.set(s.id, i));
 
+  const nextSetNumber = workingIndexById.size + 1;
+  const lastSessionSetCount = bundle.slots.filter((s) => !s.isGhost).length;
+  const countLabel = !hasHistory
+    ? `Set ${nextSetNumber}`
+    : nextSetNumber <= lastSessionSetCount
+      ? `Set ${nextSetNumber} of ${lastSessionSetCount}`
+      : `Set ${nextSetNumber} — beyond last time`;
+
   // Carry-forward on mount: prefill from the most recent set in this session.
   useEffect(() => {
     const sets = sessionExercise.sets ?? [];
@@ -518,11 +526,18 @@ function ExerciseBody({
                 style={({ pressed }) => [
                   styles.slotChip,
                   slot.isGhost && styles.slotChipGhost,
+                  slot.position < nextSetNumber && styles.slotChipDone,
+                  slot.position === nextSetNumber && styles.slotChipFocus,
                   pressed && styles.slotChipPressed,
                 ]}
               >
                 <Text style={styles.slotChipIndex}>{slot.position}.</Text>
-                <Text style={styles.slotChipMain}>
+                <Text
+                  style={[
+                    styles.slotChipMain,
+                    slot.position === nextSetNumber && styles.slotChipMainFocus,
+                  ]}
+                >
                   {formatWeightLabel(slot.weight)} × {slot.reps}
                 </Text>
                 {slot.isGhost ? (
@@ -586,6 +601,7 @@ function ExerciseBody({
         </View>
       )}
 
+      <Text style={styles.countLabel}>{countLabel}</Text>
       <View style={styles.setEntryRow}>
         <TextInput
           ref={weightRef}
@@ -768,6 +784,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   slotChipGhost: { opacity: 0.55, borderColor: colors.borderStrong, borderStyle: 'dashed' },
+  slotChipDone: { opacity: 0.5 },
+  slotChipFocus: { borderColor: colors.ink, backgroundColor: colors.paperDeep },
+  slotChipMainFocus: { fontWeight: '700' },
   slotChipWarm: { backgroundColor: colors.paperWell, borderColor: colors.border },
   slotChipPressed: { backgroundColor: colors.paperDeep, borderColor: colors.ink },
   slotChipIndex: { width: 18, color: colors.textTertiary, fontSize: 14 },
@@ -804,6 +823,7 @@ const styles = StyleSheet.create({
     borderColor: colors.brassBorder,
   },
   firstTimeText: { color: colors.brassText, fontSize: 13 },
+  countLabel: { fontSize: 12, color: colors.textTertiary, marginBottom: 6 },
   setEntryRow: {
     flexDirection: 'row',
     gap: 8,
