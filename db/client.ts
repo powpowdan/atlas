@@ -8,6 +8,7 @@ const INITIAL_VERSION = 1;
 const MIGRATION_V2 = 2;
 const MIGRATION_V3 = 3;
 const MIGRATION_V4 = 4;
+const MIGRATION_V5 = 5;
 
 // [oldName, newName, newCategory] — applied before re-seed so INSERT OR IGNORE
 // sees catalog names and never duplicates. Idempotent: guarded by name match.
@@ -86,6 +87,15 @@ export async function migrateDb(db: SQLiteDatabase): Promise<void> {
 
   if (!applied.has(MIGRATION_V4)) {
     await applyMigrationV4(db);
+  }
+
+  // v5: snapshot columns for exercise hard delete. Pure-additive — written
+  // lazily by deleteExercise only; existing rows keep NULL (live join wins).
+  if (!applied.has(MIGRATION_V5)) {
+    await applyMigration(db, MIGRATION_V5, [
+      `ALTER TABLE session_exercises ADD COLUMN exercise_name TEXT NULL;`,
+      `ALTER TABLE session_exercises ADD COLUMN exercise_category TEXT NULL;`,
+    ]);
   }
 
   await seedExercises(db);

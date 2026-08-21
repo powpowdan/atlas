@@ -63,7 +63,9 @@ CREATE TABLE IF NOT EXISTS session_exercises (
   exercise_id  TEXT NOT NULL REFERENCES exercises(id),
   order_index  INTEGER NOT NULL,
   note         TEXT,
-  created_at   INTEGER NOT NULL
+  created_at   INTEGER NOT NULL,
+  exercise_name TEXT,
+  exercise_category TEXT
 );`,
   },
   {

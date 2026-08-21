@@ -197,3 +197,77 @@ export async function restoreExercise(
     id,
   );
 }
+
+// Hard delete: freezes the exercise's name/category onto every session
+// exercise row that still references it (history renders from the snapshot),
+// drops routine memberships, then removes the exercise. All-or-nothing.
+export async function deleteExercise(
+  db: SQLiteDatabase,
+  id: string,
+): Promise<void> {
+  await db.withTransactionAsync(async () => {
+    const exercise = await getExerciseById(db, id);
+    if (!exercise) throw new Error('Exercise not found');
+
+    await db.runAsync(
+      `UPDATE session_exercises
+       SET exercise_name = ?, exercise_category = ?
+       WHERE exercise_id = ? AND exercise_name IS NULL;`,
+      exercise.name,
+      exercise.category,
+      id,
+    );
+    await db.runAsync(`DELETE FROM routine_exercises WHERE exercise_id = ?;`, id);
+    await db.runAsync(`DELETE FROM exercises WHERE id = ?;`, id);
+  });
+}
+
+export interface CategoryExerciseCounts {
+  active: number;
+  archived: number;
+  total: number;
+}
+
+export async function countExercisesInCategory(
+  db: SQLiteDatabase,
+  category: string,
+): Promise<CategoryExerciseCounts> {
+  const row = await db.getFirstAsync<{ active: number; archived: number }>(
+    `SELECT COALESCE(SUM(archived_at IS NULL), 0) AS active,
+            COALESCE(SUM(archived_at IS NOT NULL), 0) AS archived
+     FROM exercises
+     WHERE category = ?;`,
+    category,
+  );
+  const active = row?.active ?? 0;
+  const archived = row?.archived ?? 0;
+  return { active, archived, total: active + archived };
+}
+
+// Rename or merge: reassigns every exercise (active and archived) from
+// oldName to newName. When newName collides case-insensitively with another
+// stored category, that category's casing wins and the two merge.
+export async function renameCategory(
+  db: SQLiteDatabase,
+  oldName: string,
+  newName: string,
+): Promise<void> {
+  const old = oldName.trim();
+  const target = newName.trim();
+  if (!old || !target) throw new Error('Category name is required');
+
+  const collision = await db.getFirstAsync<{ category: string }>(
+    `SELECT category FROM exercises
+     WHERE category = ? COLLATE NOCASE AND category <> ?
+     LIMIT 1;`,
+    target,
+    old,
+  );
+  const finalName = collision?.category ?? target;
+
+  await db.runAsync(
+    `UPDATE exercises SET category = ? WHERE category = ?;`,
+    finalName,
+    old,
+  );
+}

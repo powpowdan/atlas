@@ -41,8 +41,9 @@ interface SessionExerciseRow {
   created_at: number;
   exercise_name: string;
   exercise_category: string | null;
+  // Nullable via LEFT JOIN: the referenced exercise may have been deleted.
   exercise_archived_at: number | null;
-  exercise_created_at: number;
+  exercise_created_at: number | null;
 }
 
 interface SetRow {
@@ -80,7 +81,7 @@ function rowToSessionExercise(row: SessionExerciseRow): SessionExercise {
       name: row.exercise_name,
       category: row.exercise_category,
       archived_at: row.exercise_archived_at,
-      created_at: row.exercise_created_at,
+      created_at: row.exercise_created_at ?? 0,
     },
   };
 }
@@ -348,12 +349,12 @@ export async function getSession(
 
   const exerciseRows = await db.getAllAsync<SessionExerciseRow>(
     `SELECT se.id, se.session_id, se.exercise_id, se.order_index, se.note, se.created_at,
-            e.name        AS exercise_name,
-            e.category    AS exercise_category,
+            COALESCE(se.exercise_name, e.name)     AS exercise_name,
+            COALESCE(se.exercise_category, e.category) AS exercise_category,
             e.archived_at AS exercise_archived_at,
             e.created_at  AS exercise_created_at
      FROM session_exercises se
-     JOIN exercises e ON e.id = se.exercise_id
+     LEFT JOIN exercises e ON e.id = se.exercise_id
      WHERE se.session_id = ?
      ORDER BY se.order_index ASC;`,
     id,

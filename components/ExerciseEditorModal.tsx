@@ -11,7 +11,12 @@ import {
 } from 'react-native';
 
 import { createExercise, listExercises, updateExercise } from '../db/queries/exercises';
-import { CANONICAL_CATEGORIES, sortCategories } from '../constants/categories';
+import {
+  CANONICAL_CATEGORIES,
+  normalizeCategory,
+  sortCategories,
+  suggestCategory,
+} from '../constants/categories';
 import { colors } from '../constants/theme';
 import {
   DuplicateExerciseError,
@@ -42,11 +47,18 @@ export function ExerciseEditorModal({
   const [extraCategories, setExtraCategories] = useState<string[]>([]);
   const [newCategoryOpen, setNewCategoryOpen] = useState(false);
   const [newCategoryText, setNewCategoryText] = useState('');
+  const [categorySuggestion, setCategorySuggestion] = useState<{
+    typed: string;
+    suggested: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Chips come from active exercises only: archiving the last exercise of a
+  // category removes its chip. The edited exercise's own category is unioned
+  // in below so it stays visible/selectable even if archived.
   const loadCategories = useCallback(async () => {
-    const rows = await listExercises(db, { includeArchived: true });
+    const rows = await listExercises(db, { includeArchived: false });
     const seen = rows
       .map((e) => e.category)
       .filter((c): c is string => c !== null);
@@ -60,6 +72,7 @@ export function ExerciseEditorModal({
       setExtraCategories([]);
       setNewCategoryOpen(false);
       setNewCategoryText('');
+      setCategorySuggestion(null);
       setError(null);
       loadCategories();
     }
@@ -69,22 +82,34 @@ export function ExerciseEditorModal({
     ...CANONICAL_CATEGORIES,
     ...dbCategories,
     ...extraCategories,
+    ...(exercise?.category ? [exercise.category] : []),
   ]);
+
+  function acceptNewCategory(name: string) {
+    setCategorySuggestion(null);
+    setExtraCategories((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setCategory(name);
+  }
 
   function submitNewCategory() {
     const trimmed = newCategoryText.trim();
     setNewCategoryOpen(false);
     setNewCategoryText('');
     if (!trimmed) return;
-    const existing = allCategories.find(
-      (c) => c.toLowerCase() === trimmed.toLowerCase(),
+    const exact = allCategories.find(
+      (c) => normalizeCategory(c) === normalizeCategory(trimmed),
     );
-    if (existing) {
-      setCategory(existing);
+    if (exact) {
+      setCategory(exact);
+      setCategorySuggestion(null);
       return;
     }
-    setExtraCategories((prev) => [...prev, trimmed]);
-    setCategory(trimmed);
+    const near = suggestCategory(trimmed, allCategories);
+    if (near && categorySuggestion?.typed !== trimmed) {
+      setCategorySuggestion({ typed: trimmed, suggested: near });
+      return;
+    }
+    acceptNewCategory(trimmed);
   }
 
   async function handleSave() {
@@ -186,6 +211,32 @@ export function ExerciseEditorModal({
               </Pressable>
             )}
           </View>
+          {categorySuggestion ? (
+            <View style={styles.suggestionRow}>
+              <Text style={styles.suggestionText}>
+                Did you mean &quot;{categorySuggestion.suggested}&quot;?
+              </Text>
+              <Pressable
+                style={styles.suggestionUse}
+                onPress={() => {
+                  setCategory(categorySuggestion.suggested);
+                  setCategorySuggestion(null);
+                }}
+              >
+                <Text style={styles.suggestionUseText}>
+                  Use &quot;{categorySuggestion.suggested}&quot;
+                </Text>
+              </Pressable>
+              <Pressable
+                style={styles.suggestionKeep}
+                onPress={() => acceptNewCategory(categorySuggestion.typed)}
+              >
+                <Text style={styles.suggestionKeepText}>
+                  Keep &quot;{categorySuggestion.typed}&quot;
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
       </View>
@@ -266,5 +317,28 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   newCategoryAddText: { color: colors.paper, fontSize: 13, fontWeight: '600' },
+  suggestionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  suggestionText: { color: colors.inkSoft, fontSize: 13 },
+  suggestionUse: {
+    backgroundColor: colors.ink,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  suggestionUseText: { color: colors.paper, fontSize: 12, fontWeight: '600' },
+  suggestionKeep: {
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  suggestionKeepText: { color: colors.ink, fontSize: 12, fontWeight: '600' },
   error: { color: colors.oxblood, marginTop: 12 },
 });
