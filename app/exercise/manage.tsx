@@ -16,6 +16,7 @@ import {
   listExercises,
   restoreExercise,
 } from '../../db/queries/exercises';
+import { sortCategories } from '../../constants/categories';
 import { ExerciseEditorModal } from '../../components/ExerciseEditorModal';
 import { colors } from '../../constants/theme';
 import type { Exercise } from '../../types';
@@ -31,16 +32,20 @@ function confirmDiscard(message: string, onConfirm: () => void) {
   }
 }
 
+type Filter = 'active' | 'archived';
+
 interface Section {
-  title: string;
+  category: string;
   data: Exercise[];
+  count: number;
 }
 
 export default function ManageExercisesScreen() {
   const db = useSQLiteContext();
   const navigation = useNavigation();
-  const [active, setActive] = useState<Exercise[]>([]);
-  const [archived, setArchived] = useState<Exercise[]>([]);
+  const [filter, setFilter] = useState<Filter>('active');
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Exercise | undefined>(undefined);
 
@@ -50,13 +55,46 @@ export default function ManageExercisesScreen() {
 
   const refresh = useCallback(async () => {
     const rows = await listExercises(db, { includeArchived: true });
-    setActive(rows.filter((e) => e.archived_at === null));
-    setArchived(rows.filter((e) => e.archived_at !== null));
+    setExercises(rows);
   }, [db]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  function toggleExpanded(category: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  }
+
+  const visible = exercises.filter((e) =>
+    filter === 'active'
+      ? e.archived_at === null
+      : e.archived_at !== null,
+  );
+
+  const byCategory = new Map<string, Exercise[]>();
+  for (const ex of visible) {
+    const key = ex.category ?? '';
+    const list = byCategory.get(key) ?? [];
+    list.push(ex);
+    byCategory.set(key, list);
+  }
+
+  const sections: Section[] = sortCategories(byCategory.keys()).map(
+    (category) => ({
+      category,
+      count: byCategory.get(category)!.length,
+      data: expanded.has(category) ? byCategory.get(category)! : [],
+    }),
+  );
 
   function openCreate() {
     setEditing(undefined);
@@ -86,13 +124,27 @@ export default function ManageExercisesScreen() {
     refresh();
   }
 
-  const sections: Section[] = [];
-  if (active.length > 0) sections.push({ title: 'Active', data: active });
-  if (archived.length > 0) sections.push({ title: 'Archived', data: archived });
-
   return (
     <View style={styles.container}>
       <View style={styles.toolbar}>
+        <View style={styles.filterToggle}>
+          {(['active', 'archived'] as Filter[]).map((f) => (
+            <Pressable
+              key={f}
+              style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
+              onPress={() => setFilter(f)}
+            >
+              <Text
+                style={[
+                  styles.filterBtnText,
+                  filter === f && styles.filterBtnTextActive,
+                ]}
+              >
+                {f === 'active' ? 'Active' : 'Archived'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
         <Pressable style={styles.addBtn} onPress={openCreate}>
           <Text style={styles.addBtnText}>+ New exercise</Text>
         </Pressable>
@@ -102,13 +154,20 @@ export default function ManageExercisesScreen() {
         sections={sections}
         keyExtractor={(item) => item.id}
         renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {section.title} ({section.data.length})
+          <Pressable
+            style={styles.sectionHeader}
+            onPress={() => toggleExpanded(section.category)}
+          >
+            <Text style={styles.sectionChevron}>
+              {expanded.has(section.category) ? '▾' : '▸'}
             </Text>
-          </View>
+            <Text style={styles.sectionTitle}>
+              {section.category || 'Uncategorized'}
+            </Text>
+            <Text style={styles.sectionCount}>{section.count}</Text>
+          </Pressable>
         )}
-        renderItem={({ item, section }) => (
+        renderItem={({ item }) => (
           <View
             style={[
               styles.listItem,
@@ -117,12 +176,8 @@ export default function ManageExercisesScreen() {
           >
             <View style={{ flex: 1 }}>
               <Text style={styles.listItemName}>{item.name}</Text>
-              <Text style={styles.listItemMeta}>
-                {item.category ?? '—'}
-                {item.is_assisted ? ' · assisted' : ''}
-              </Text>
             </View>
-            {section.title === 'Active' ? (
+            {item.archived_at === null ? (
               <View style={styles.actions}>
                 <Pressable
                   style={styles.actionBtn}
@@ -150,7 +205,11 @@ export default function ManageExercisesScreen() {
           </View>
         )}
         ListEmptyComponent={
-          <Text style={styles.empty}>No exercises yet. Tap "+ New exercise" above.</Text>
+          <Text style={styles.empty}>
+            {filter === 'archived'
+              ? 'No archived exercises.'
+              : 'No exercises yet. Tap "+ New exercise" above.'}
+          </Text>
         }
       />
       <ExerciseEditorModal
@@ -169,11 +228,24 @@ export default function ManageExercisesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paper },
   toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    alignItems: 'flex-end',
   },
+  filterToggle: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  filterBtn: { paddingHorizontal: 14, paddingVertical: 6 },
+  filterBtnActive: { backgroundColor: colors.ink },
+  filterBtnText: { color: colors.inkSoft, fontSize: 13, fontWeight: '600' },
+  filterBtnTextActive: { color: colors.paper },
   addBtn: {
     backgroundColor: colors.ink,
     paddingHorizontal: 16,
@@ -184,12 +256,17 @@ const styles = StyleSheet.create({
   list: { flex: 1 },
   sectionHeader: {
     backgroundColor: colors.paperDeep,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: colors.inkSoft, letterSpacing: 0.5 },
+  sectionChevron: { color: colors.inkSoft, fontSize: 12 },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.inkSoft, letterSpacing: 0.5, flex: 1 },
+  sectionCount: { color: colors.textTertiary, fontSize: 12 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -200,7 +277,6 @@ const styles = StyleSheet.create({
   },
   listItemArchived: { opacity: 0.6 },
   listItemName: { fontSize: 16, fontWeight: '500', color: colors.ink },
-  listItemMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
   actions: { flexDirection: 'row', gap: 8 },
   actionBtn: { paddingHorizontal: 10, paddingVertical: 6 },
   actionEditText: { color: colors.ink, fontWeight: '600', fontSize: 13 },

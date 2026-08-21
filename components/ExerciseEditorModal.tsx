@@ -1,17 +1,17 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Modal,
   Platform,
   Pressable,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 
-import { createExercise, updateExercise } from '../db/queries/exercises';
+import { createExercise, listExercises, updateExercise } from '../db/queries/exercises';
+import { CANONICAL_CATEGORIES, sortCategories } from '../constants/categories';
 import { colors } from '../constants/theme';
 import {
   DuplicateExerciseError,
@@ -37,19 +37,55 @@ export function ExerciseEditorModal({
   const isEdit = Boolean(exercise);
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [isAssisted, setIsAssisted] = useState(false);
+  const [category, setCategory] = useState<string | null>(null);
+  const [dbCategories, setDbCategories] = useState<string[]>([]);
+  const [extraCategories, setExtraCategories] = useState<string[]>([]);
+  const [newCategoryOpen, setNewCategoryOpen] = useState(false);
+  const [newCategoryText, setNewCategoryText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const loadCategories = useCallback(async () => {
+    const rows = await listExercises(db, { includeArchived: true });
+    const seen = rows
+      .map((e) => e.category)
+      .filter((c): c is string => c !== null);
+    setDbCategories([...new Set(seen)]);
+  }, [db]);
 
   useEffect(() => {
     if (visible) {
       setName(exercise?.name ?? '');
-      setCategory(exercise?.category ?? '');
-      setIsAssisted(exercise?.is_assisted ?? false);
+      setCategory(exercise?.category ?? null);
+      setExtraCategories([]);
+      setNewCategoryOpen(false);
+      setNewCategoryText('');
       setError(null);
+      loadCategories();
     }
-  }, [visible, exercise]);
+  }, [visible, exercise, loadCategories]);
+
+  const allCategories = sortCategories([
+    ...CANONICAL_CATEGORIES,
+    ...dbCategories,
+    ...extraCategories,
+  ]);
+
+  function submitNewCategory() {
+    const trimmed = newCategoryText.trim();
+    setNewCategoryOpen(false);
+    setNewCategoryText('');
+    if (!trimmed) return;
+    const existing = allCategories.find(
+      (c) => c.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (existing) {
+      setCategory(existing);
+      return;
+    }
+    setExtraCategories((prev) => [...prev, trimmed]);
+    setCategory(trimmed);
+  }
 
   async function handleSave() {
     const trimmed = name.trim();
@@ -57,10 +93,13 @@ export function ExerciseEditorModal({
       setError('Name is required');
       return;
     }
+    if (!category) {
+      setError('Category is required');
+      return;
+    }
     const input: ExerciseInput = {
       name: trimmed,
-      category: category.trim() || null,
-      is_assisted: isAssisted,
+      category,
     };
     setSaving(true);
     try {
@@ -109,16 +148,43 @@ export function ExerciseEditorModal({
             onChangeText={setName}
             autoFocus={!isEdit}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Category (optional)"
-            placeholderTextColor={colors.inkSoft}
-            value={category}
-            onChangeText={setCategory}
-          />
-          <View style={styles.row}>
-            <Text style={styles.assistedLabel}>Assisted</Text>
-            <Switch value={isAssisted} onValueChange={setIsAssisted} />
+          <Text style={styles.label}>Category</Text>
+          <View style={styles.chipRow}>
+            {allCategories.map((c) => (
+              <Pressable
+                key={c}
+                style={[styles.chip, category === c && styles.chipActive]}
+                onPress={() => setCategory(c)}
+              >
+                <Text style={[styles.chipText, category === c && styles.chipTextActive]}>
+                  {c}
+                </Text>
+              </Pressable>
+            ))}
+            {newCategoryOpen ? (
+              <View style={styles.newCategoryWrap}>
+                <TextInput
+                  style={styles.newCategoryInput}
+                  placeholder="Category name"
+                  placeholderTextColor={colors.inkSoft}
+                  value={newCategoryText}
+                  onChangeText={setNewCategoryText}
+                  autoFocus
+                  onSubmitEditing={submitNewCategory}
+                  returnKeyType="done"
+                />
+                <Pressable style={styles.newCategoryAdd} onPress={submitNewCategory}>
+                  <Text style={styles.newCategoryAddText}>Add</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                style={styles.chipNew}
+                onPress={() => setNewCategoryOpen(true)}
+              >
+                <Text style={styles.chipNewText}>+ New…</Text>
+              </Pressable>
+            )}
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
@@ -147,15 +213,58 @@ const styles = StyleSheet.create({
     borderColor: colors.borderStrong,
     borderRadius: 6,
     padding: 10,
-    marginBottom: 8,
+    marginBottom: 16,
     color: colors.ink,
   },
-  row: {
+  label: { color: colors.inkSoft, fontSize: 13, marginBottom: 8 },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: 6,
+  },
+  chipActive: {
+    backgroundColor: colors.ink,
+    borderColor: colors.ink,
+  },
+  chipText: { color: colors.inkSoft, fontSize: 13, fontWeight: '500' },
+  chipTextActive: { color: colors.paper, fontWeight: '600' },
+  chipNew: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: 6,
+    borderStyle: 'dashed',
+  },
+  chipNewText: { color: colors.inkSoft, fontSize: 13, fontWeight: '600' },
+  newCategoryWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
+    gap: 8,
   },
-  assistedLabel: { color: colors.ink },
-  error: { color: colors.oxblood, marginTop: 8 },
+  newCategoryInput: {
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    width: 160,
+    color: colors.ink,
+    fontSize: 13,
+  },
+  newCategoryAdd: {
+    backgroundColor: colors.ink,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  newCategoryAddText: { color: colors.paper, fontSize: 13, fontWeight: '600' },
+  error: { color: colors.oxblood, marginTop: 12 },
 });

@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS exercises (
   id            TEXT PRIMARY KEY NOT NULL,
   name          TEXT NOT NULL UNIQUE,
   category      TEXT,
-  is_assisted   INTEGER NOT NULL DEFAULT 0,
   created_at    INTEGER NOT NULL
 );`,
   },

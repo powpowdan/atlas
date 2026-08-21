@@ -5,6 +5,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 
 import { listExercises } from '../db/queries/exercises';
+import { sortCategories } from '../constants/categories';
 import type { Exercise } from '../types';
 import { ExerciseEditorModal } from './ExerciseEditorModal';
 import { LogoMark } from './LogoMark';
@@ -26,6 +28,11 @@ interface ExercisePickerModalProps {
   autoCloseOnSelect?: boolean;
   onSelect: (exercise: Exercise) => void;
   onClose: () => void;
+}
+
+interface PickerSection {
+  category: string;
+  data: Exercise[];
 }
 
 export function ExercisePickerModal({
@@ -58,6 +65,19 @@ export function ExercisePickerModal({
     if (!query.trim()) return true;
     return ex.name.toLowerCase().includes(query.trim().toLowerCase());
   });
+
+  const searching = query.trim().length > 0;
+
+  const byCategory = new Map<string, Exercise[]>();
+  for (const ex of filtered) {
+    const key = ex.category ?? '';
+    const list = byCategory.get(key) ?? [];
+    list.push(ex);
+    byCategory.set(key, list);
+  }
+  const sections: PickerSection[] = sortCategories(byCategory.keys()).map(
+    (category) => ({ category, data: byCategory.get(category)! }),
+  );
 
   function handleSelect(exercise: Exercise) {
     onSelect(exercise);
@@ -98,38 +118,50 @@ export function ExercisePickerModal({
               onChangeText={setQuery}
             />
           </View>
-          <FlatList
-            data={filtered}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.pickerItem}
-                onPress={() => handleSelect(item)}
-              >
-                <Text style={styles.pickerItemName}>{item.name}</Text>
-                <Text style={styles.pickerItemMeta}>
-                  {item.category ?? '—'}
-                  {item.is_assisted ? ' · assisted' : ''}
-                </Text>
-              </Pressable>
-            )}
-            ListEmptyComponent={
-              <View style={styles.emptyWrap}>
-                <LogoMark size={200} />
-                <Text style={styles.empty}>
-                  {query
-                    ? `No exercises match "${query}".`
-                    : 'No exercises available.'}
-                </Text>
+          {searching ? (
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item.id}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
                 <Pressable
-                  style={styles.emptyCreateBtn}
-                  onPress={() => setEditorOpen(true)}
+                  style={styles.pickerItem}
+                  onPress={() => handleSelect(item)}
                 >
-                  <Text style={styles.emptyCreateBtnText}>+ Create a new exercise</Text>
+                  <Text style={styles.pickerItemName}>{item.name}</Text>
+                  <Text style={styles.pickerItemMeta}>
+                    {item.category ?? '—'}
+                  </Text>
                 </Pressable>
-              </View>
-            }
-          />
+              )}
+              ListEmptyComponent={
+                <EmptyState query={query} onCreate={() => setEditorOpen(true)} />
+              }
+            />
+          ) : (
+            <SectionList
+              sections={sections}
+              keyExtractor={(item) => item.id}
+              renderSectionHeader={({ section }) => (
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>
+                    {section.category || 'Uncategorized'}
+                  </Text>
+                </View>
+              )}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.pickerItem}
+                  onPress={() => handleSelect(item)}
+                >
+                  <Text style={styles.pickerItemName}>{item.name}</Text>
+                </Pressable>
+              )}
+              ListEmptyComponent={
+                <EmptyState query={query} onCreate={() => setEditorOpen(true)} />
+              }
+            />
+          )}
         </View>
       </Modal>
       <ExerciseEditorModal
@@ -138,6 +170,22 @@ export function ExercisePickerModal({
         onClose={() => setEditorOpen(false)}
       />
     </>
+  );
+}
+
+function EmptyState({ query, onCreate }: { query: string; onCreate: () => void }) {
+  return (
+    <View style={styles.emptyWrap}>
+      <LogoMark size={200} />
+      <Text style={styles.empty}>
+        {query
+          ? `No exercises match "${query}".`
+          : 'No exercises available.'}
+      </Text>
+      <Pressable style={styles.emptyCreateBtn} onPress={onCreate}>
+        <Text style={styles.emptyCreateBtnText}>+ Create a new exercise</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -163,6 +211,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: colors.ink,
   },
+  sectionHeader: {
+    backgroundColor: colors.paperDeep,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: colors.inkSoft, letterSpacing: 0.5 },
   pickerItem: {
     padding: 12,
     borderBottomWidth: 1,

@@ -15,17 +15,27 @@ The system SHALL provide a list of exercises suitable for picking when adding an
 
 #### Scenario: Management view includes archived exercises
 
-- **WHEN** the user opens the exercise management screen
-- **THEN** both active and archived exercises are shown, with archived exercises visually distinguished from active ones
+- **WHEN** the user opens the exercise management screen with the Archived filter selected
+- **THEN** archived exercises are shown grouped under their categories, visually distinguished (dimmed) from active exercises
 
 ### Requirement: Create an exercise
 
-The system SHALL allow the user to create a new exercise with a unique name, an optional category, and an optional assisted flag. Names SHALL be unique case-insensitively. Creating an exercise whose name already exists SHALL fail with a clear "already exists" indication rather than a generic error.
+The system SHALL allow the user to create a new exercise with a unique name and a required category. The category SHALL be selected from the canonical categories or a user-created category; there SHALL be no way to save an exercise without a category. Names SHALL be unique case-insensitively. Creating an exercise whose name already exists SHALL fail with a clear "already exists" indication rather than a generic error.
 
-#### Scenario: Create with a new name
+#### Scenario: Create with a canonical category
 
-- **WHEN** the user submits a new exercise named "Front squat" with category "Legs"
+- **WHEN** the user submits a new exercise named "Front squat" with category "Legs" selected from the canonical chips
 - **THEN** the exercise is persisted and appears in subsequent pickers
+
+#### Scenario: Create with a custom category
+
+- **WHEN** the user creates the inline category "Forearms" in the editor and saves a new exercise with that category
+- **THEN** the exercise is persisted under "Forearms" and the category becomes available in subsequent category selections
+
+#### Scenario: Category is required
+
+- **WHEN** the user attempts to save a new exercise without selecting a category
+- **THEN** the system rejects the save with a clear indication that a category is required
 
 #### Scenario: Reject a duplicate name
 
@@ -39,17 +49,22 @@ The system SHALL allow the user to create a new exercise with a unique name, an 
 
 ### Requirement: Edit an exercise
 
-The system SHALL allow the user to edit an existing exercise's name, category, and assisted flag. Edits SHALL apply in place to the existing row; past sessions, the progression chart, and routines that reference the exercise SHALL reflect the updated values without historical rename tracking.
+The system SHALL allow the user to edit an existing exercise's name and category. The category SHALL be selected from the canonical categories or a user-created category, using the same selection mechanism as creation. Edits SHALL apply in place to the existing row; past sessions, the progression chart, and routines that reference the exercise SHALL reflect the updated values without historical rename tracking.
 
 #### Scenario: Rename an exercise
 
 - **WHEN** the user renames "Bench" to "Bench press" and saves
 - **THEN** the exercise appears as "Bench press" in pickers, in past session detail views, on the progression chart, and in any routine that contains it
 
-#### Scenario: Editing category only
+#### Scenario: Change category
 
-- **WHEN** the user changes an exercise's category from "Chest" to "Push" and saves
-- **THEN** only the category changes; name and assisted flag remain as they were
+- **WHEN** the user changes an exercise's category from "Chest" to "Shoulders" and saves
+- **THEN** the exercise appears under "Shoulders" in the manage screen and picker, and only the category changes
+
+#### Scenario: Edit an uncategorized legacy exercise
+
+- **WHEN** the user edits an exercise that has no category (created before categories were required) and saves
+- **THEN** the save requires a category to be selected, same as creation
 
 #### Scenario: Edit rejects a name collision
 

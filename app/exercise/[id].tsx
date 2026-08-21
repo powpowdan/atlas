@@ -101,10 +101,7 @@ export default function ExerciseProgressionScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{exercise.name}</Text>
-        <Text style={styles.subtitle}>
-          {exercise.category ?? '—'}
-          {exercise.is_assisted ? ' · assisted' : ''}
-        </Text>
+        <Text style={styles.subtitle}>{exercise.category ?? '—'}</Text>
       </View>
 
       <View style={styles.recordsRow}>

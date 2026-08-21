@@ -24,7 +24,6 @@ interface RoutineExerciseRow {
   exercise_id_full: string;
   exercise_name: string;
   exercise_category: string | null;
-  exercise_is_assisted: number;
   exercise_archived_at: number | null;
   exercise_created_at: number;
 }
@@ -43,7 +42,6 @@ function rowToRoutineExercise(row: RoutineExerciseRow): RoutineExercise {
     id: row.exercise_id_full,
     name: row.exercise_name,
     category: row.exercise_category,
-    is_assisted: row.exercise_is_assisted === 1,
     archived_at: row.exercise_archived_at,
     created_at: row.exercise_created_at,
   };
@@ -91,7 +89,6 @@ export async function getRoutine(
             e.id          AS exercise_id_full,
             e.name        AS exercise_name,
             e.category    AS exercise_category,
-            e.is_assisted AS exercise_is_assisted,
             e.archived_at AS exercise_archived_at,
             e.created_at  AS exercise_created_at
      FROM routine_exercises re
@@ -180,11 +177,24 @@ export async function deleteRoutine(
 const SEED_ROUTINES: { name: string; exercises: string[] }[] = [
   {
     name: 'Day 1',
-    exercises: ['Bench', 'Fly', 'Ab crunch', 'Paloff press', 'Face pull', 'Tri pulldown', 'Bi'],
+    exercises: [
+      'Barbell bench press',
+      'Dumbbell fly',
+      'Crunch',
+      'Pallof press',
+      'Face pull',
+      'Triceps pushdown',
+      'Barbell curl',
+    ],
   },
   {
     name: 'Day 2',
-    exercises: ['Pulldown', 'Seated row', 'Assisted', 'Shoulder press'],
+    exercises: [
+      'Lat pulldown',
+      'Seated cable row',
+      'Assisted pullups',
+      'Overhead press',
+    ],
   },
 ];
 

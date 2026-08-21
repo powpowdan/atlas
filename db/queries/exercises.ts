@@ -13,7 +13,6 @@ interface ExerciseRow {
   id: string;
   name: string;
   category: string | null;
-  is_assisted: number;
   archived_at: number | null;
   created_at: number;
 }
@@ -23,33 +22,40 @@ function rowToExercise(row: ExerciseRow): Exercise {
     id: row.id,
     name: row.name,
     category: row.category,
-    is_assisted: row.is_assisted === 1,
     archived_at: row.archived_at,
     created_at: row.created_at,
   };
 }
 
-const SELECT_COLS = `id, name, category, is_assisted, archived_at, created_at`;
+const SELECT_COLS = `id, name, category, archived_at, created_at`;
 
-export async function seedExercisesIfEmpty(db: SQLiteDatabase): Promise<void> {
-  const countRow = await db.getFirstAsync<{ c: number }>(
-    `SELECT COUNT(*) AS c FROM exercises;`,
+const SEED_VERSION = 2;
+
+export async function seedExercises(db: SQLiteDatabase): Promise<void> {
+  const appliedRows = await db.getAllAsync<{ version: number }>(
+    `SELECT version FROM seed_version;`,
   );
-  const count = countRow?.c ?? 0;
-  if (count > 0) return;
+  const applied = new Set(appliedRows.map((r) => r.version));
+  if (applied.has(SEED_VERSION)) return;
 
   const now = Date.now();
-  for (const item of seedData) {
+  await db.withTransactionAsync(async () => {
+    for (const item of seedData) {
+      await db.runAsync(
+        `INSERT OR IGNORE INTO exercises (id, name, category, archived_at, created_at)
+         VALUES (?, ?, ?, NULL, ?);`,
+        uuid(),
+        item.name,
+        item.category,
+        now,
+      );
+    }
     await db.runAsync(
-      `INSERT OR IGNORE INTO exercises (id, name, category, is_assisted, archived_at, created_at)
-       VALUES (?, ?, ?, ?, NULL, ?);`,
-      uuid(),
-      item.name,
-      item.category ?? null,
-      item.is_assisted ? 1 : 0,
+      `INSERT INTO seed_version (version, applied_at) VALUES (?, ?);`,
+      SEED_VERSION,
       now,
     );
-  }
+  });
 }
 
 export async function listExercises(
@@ -118,6 +124,8 @@ export async function createExercise(
 ): Promise<Exercise> {
   const trimmed = input.name.trim();
   if (!trimmed) throw new Error('Name is required');
+  const category = input.category.trim();
+  if (!category) throw new Error('Category is required');
 
   let created: Exercise | null = null;
   await db.withTransactionAsync(async () => {
@@ -127,12 +135,11 @@ export async function createExercise(
     const id = uuid();
     const now = Date.now();
     await db.runAsync(
-      `INSERT INTO exercises (id, name, category, is_assisted, archived_at, created_at)
-       VALUES (?, ?, ?, ?, NULL, ?);`,
+      `INSERT INTO exercises (id, name, category, archived_at, created_at)
+       VALUES (?, ?, ?, NULL, ?);`,
       id,
       trimmed,
-      input.category?.trim() || null,
-      input.is_assisted ? 1 : 0,
+      category,
       now,
     );
     created = await getExerciseById(db, id);
@@ -148,6 +155,8 @@ export async function updateExercise(
 ): Promise<Exercise> {
   const trimmed = input.name.trim();
   if (!trimmed) throw new Error('Name is required');
+  const category = input.category.trim();
+  if (!category) throw new Error('Category is required');
 
   let updated: Exercise | null = null;
   await db.withTransactionAsync(async () => {
@@ -156,11 +165,10 @@ export async function updateExercise(
 
     await db.runAsync(
       `UPDATE exercises
-       SET name = ?, category = ?, is_assisted = ?
+       SET name = ?, category = ?
        WHERE id = ?;`,
       trimmed,
-      input.category?.trim() || null,
-      input.is_assisted ? 1 : 0,
+      category,
       id,
     );
     updated = await getExerciseById(db, id);

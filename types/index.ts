@@ -2,15 +2,13 @@ export interface Exercise {
   id: string;
   name: string;
   category: string | null;
-  is_assisted: boolean;
   archived_at: number | null;
   created_at: number;
 }
 
 export interface ExerciseInput {
   name: string;
-  category: string | null;
-  is_assisted: boolean;
+  category: string;
 }
 
 export type ExerciseUpdate = ExerciseInput;
