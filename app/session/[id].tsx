@@ -212,6 +212,7 @@ export default function SessionScreen() {
         <SectionList
           style={styles.list}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           sections={session.exercises.map(
             (exercise): ExerciseSection => ({
               id: exercise.id,
@@ -437,6 +438,7 @@ function ExerciseBody({
         setNote('');
         setIsWarmup(false);
       }
+      Keyboard.dismiss();
       setError(null);
       onChanged();
     } catch (e) {

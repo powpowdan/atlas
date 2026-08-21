@@ -2,6 +2,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -198,6 +199,7 @@ export default function HistoryDetailScreen() {
         setNote('');
         setIsWarmup(false);
       }
+      Keyboard.dismiss();
       setError(null);
       await reload();
     } catch (e) {
