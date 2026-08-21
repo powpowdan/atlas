@@ -22,4 +22,4 @@
 ## 5. Verification
 
 - [x] 5.1 Run `npm run typecheck` (WSL-safe) and fix any errors
-- [ ] 5.2 Manual verification in PowerShell-run app: enter/exit edit mode; edit a set's weight/reps/warmup/note and confirm position preserved; invalid set rejected; delete set with confirm; add set appends last; remove exercise with confirm; add exercise appears at end; edited values reflected in exercise detail (best/last) and progression chart
+- [x] 5.2 Manual verification in PowerShell-run app: enter/exit edit mode; edit a set's weight/reps/warmup/note and confirm position preserved; invalid set rejected; delete set with confirm; add set appends last; remove exercise with confirm; add exercise appears at end; edited values reflected in exercise detail (best/last) and progression chart

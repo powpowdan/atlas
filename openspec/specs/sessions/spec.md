@@ -75,12 +75,12 @@ The system SHALL allow the user to edit any field of a previously logged set in 
 
 ### Requirement: Delete a set
 
-The system SHALL allow the user to delete a set from an in-progress session.
+The system SHALL allow the user to delete a set from an in-progress session. Deletion SHALL take effect immediately without a confirmation dialog, and the system SHALL offer a time-limited undo as specified in the undo capability.
 
 #### Scenario: Remove an unwanted set
 
-- **WHEN** the user deletes a set and confirms
-- **THEN** the set is removed and the exercise's remaining sets are unchanged
+- **WHEN** the user deletes a set
+- **THEN** the set is removed immediately, the exercise's remaining sets are unchanged, and an undo affordance is offered for a limited time
 
 ### Requirement: Keyboard does not obscure set entry
 
@@ -238,6 +238,89 @@ The system SHALL allow the user to delete a completed session from history, remo
 #### Scenario: Deletion recomputes tracking
 
 - **WHEN** the user deletes a completed session whose sets included an exercise's best or most-reps set
+- **THEN** subsequent best, most-reps, and last-session values for that exercise reflect the remaining sets only
+
+### Requirement: Edit a completed session from history
+
+The system SHALL allow the user to edit a completed session from its history detail view. Editing SHALL be gated behind an explicit edit mode: the default history view SHALL remain read-only, and edit affordances SHALL appear only while edit mode is active. All edits SHALL apply directly to the stored session with the same validation rules as live logging.
+
+#### Scenario: View is read-only by default
+
+- **WHEN** the user opens a completed session from history
+- **THEN** the session is displayed read-only with no edit affordances
+
+#### Scenario: Enter edit mode
+
+- **WHEN** the user activates edit mode on a completed session
+- **THEN** each exercise shows affordances to edit sets, add sets, and remove the exercise, and the session shows an affordance to add an exercise
+
+#### Scenario: Exit edit mode after changes
+
+- **WHEN** the user deactivates edit mode after making changes
+- **THEN** the history detail view reflects all changes made while edit mode was active
+
+### Requirement: Edit a set in a completed session
+
+The system SHALL allow the user to edit any field of a logged set — weight, reps, warmup flag, and note — of a completed session while in edit mode. An edited set SHALL keep its position in the exercise's set order.
+
+#### Scenario: Correct a mistyped set after completion
+
+- **WHEN** the user changes a set's weight from 135 to 225 and saves
+- **THEN** the set is updated with weight 225 and remains in its original position among the exercise's sets
+
+#### Scenario: Reject an invalid edit
+
+- **WHEN** the user clears both weight and reps from a set and attempts to save
+- **THEN** the system rejects the save and shows a validation error
+
+### Requirement: Delete a set in a completed session
+
+The system SHALL allow the user to delete a set from a completed session while in edit mode. Deletion SHALL take effect immediately without a confirmation dialog, and the system SHALL offer a time-limited undo as specified in the undo capability.
+
+#### Scenario: Remove a mis-logged set
+
+- **WHEN** the user deletes a set from a completed session
+- **THEN** the set is removed immediately, the exercise's remaining sets are unchanged, and an undo affordance is offered for a limited time
+
+### Requirement: Add a set to a completed session
+
+The system SHALL allow the user to add a set to any exercise in a completed session while in edit mode, subject to the same validation as live logging. The new set SHALL appear after the exercise's existing sets.
+
+#### Scenario: Append a forgotten set
+
+- **WHEN** the user adds a set of 100 lbs × 8 to an exercise in a completed session
+- **THEN** the set is persisted and displayed after that exercise's existing sets
+
+### Requirement: Add an exercise to a completed session
+
+The system SHALL allow the user to add any exercise from the exercise library to a completed session while in edit mode.
+
+#### Scenario: Add an exercise after completion
+
+- **WHEN** the user adds an exercise from the library to a completed session
+- **THEN** the exercise appears at the end of the session's exercise list and can receive sets
+
+### Requirement: Remove an exercise from a completed session
+
+The system SHALL allow the user to remove an exercise — and with it all of that exercise's sets — from a completed session while in edit mode. Removal SHALL take effect immediately without a confirmation dialog, and the system SHALL offer a time-limited undo as specified in the undo capability.
+
+#### Scenario: Remove an exercise
+
+- **WHEN** the user removes an exercise from a completed session
+- **THEN** the exercise and all of its sets are removed immediately, the remaining exercises are unchanged, and an undo affordance is offered for a limited time
+
+### Requirement: History edits recompute tracking
+
+Because best-set, most-reps, personal-record, progression, and last-session reference values are derived from logged sets, any edit to a completed session SHALL be reflected in those derived values.
+
+#### Scenario: Editing a set updates tracking
+
+- **WHEN** the user edits a set in a completed session so that it becomes the heaviest set ever logged for that exercise
+- **THEN** subsequent best-set and progression values for that exercise reflect the edited weight
+
+#### Scenario: Removing data updates tracking
+
+- **WHEN** the user deletes a set or removes an exercise whose sets included an exercise's best or most-reps set
 - **THEN** subsequent best, most-reps, and last-session values for that exercise reflect the remaining sets only
 
 ### Requirement: Show a summary when completing a session
