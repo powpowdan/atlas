@@ -64,6 +64,7 @@ export default function ManageExercisesScreen() {
   const [filter, setFilter] = useState<Filter>('active');
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState('');
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Exercise | undefined>(undefined);
   const [categoryActions, setCategoryActions] = useState<string | null>(null);
@@ -118,10 +119,21 @@ export default function ManageExercisesScreen() {
     });
   }
 
-  const visible = exercises.filter((e) =>
-    filter === 'active'
-      ? e.archived_at === null
-      : e.archived_at !== null,
+  const searching = query.trim().length > 0;
+
+  const visible = exercises.filter((e) => {
+    const inFilter =
+      filter === 'active' ? e.archived_at === null : e.archived_at !== null;
+    if (!inFilter) return false;
+    if (!searching) return true;
+    return e.name.toLowerCase().includes(query.trim().toLowerCase());
+  });
+
+  // While searching, matching sections render expanded without touching the
+  // user's expansion set — clearing the query restores it untouched.
+  const isExpanded = useCallback(
+    (category: string) => searching || expanded.has(category),
+    [searching, expanded],
   );
 
   const byCategory = new Map<string, Exercise[]>();
@@ -316,13 +328,27 @@ export default function ManageExercisesScreen() {
           <Text style={styles.addBtnText}>+ New exercise</Text>
         </Pressable>
       </View>
-      <ScrollView style={styles.list} ref={scrollRef}>
+      <View style={styles.searchWrap}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search exercises"
+          placeholderTextColor={colors.inkSoft}
+          value={query}
+          onChangeText={setQuery}
+        />
+      </View>
+      <ScrollView
+        style={styles.list}
+        ref={scrollRef}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         {sections.map((section) => (
           <AnimatedCategorySection
             key={section.category}
             title={section.category || 'Uncategorized'}
             count={section.count}
-            expanded={expanded.has(section.category)}
+            expanded={isExpanded(section.category)}
             onToggle={() => toggleExpanded(section.category)}
             onLongPress={
               section.category
@@ -338,9 +364,11 @@ export default function ManageExercisesScreen() {
         ))}
         {sections.length === 0 ? (
           <Text style={styles.empty}>
-            {filter === 'archived'
-              ? 'No archived exercises.'
-              : 'No exercises yet. Tap "+ New exercise" above.'}
+            {searching
+              ? `No exercises match "${query.trim()}".`
+              : filter === 'archived'
+                ? 'No archived exercises.'
+                : 'No exercises yet. Tap "+ New exercise" above.'}
           </Text>
         ) : null}
       </ScrollView>
@@ -453,6 +481,15 @@ const styles = StyleSheet.create({
   },
   addBtnText: { color: colors.paper, fontWeight: '600' },
   list: { flex: 1 },
+  searchWrap: { padding: 12 },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: colors.ink,
+  },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
