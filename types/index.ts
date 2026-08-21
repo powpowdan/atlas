@@ -20,6 +20,13 @@ export class DuplicateExerciseError extends Error {
   }
 }
 
+export class DuplicateRoutineError extends Error {
+  constructor(public routineName: string) {
+    super(`A routine with the name "${routineName}" already exists.`);
+    this.name = 'DuplicateRoutineError';
+  }
+}
+
 export interface Routine {
   id: string;
   name: string;

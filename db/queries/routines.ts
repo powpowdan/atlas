@@ -2,6 +2,7 @@ import { SQLiteDatabase } from 'expo-sqlite';
 import { uuid } from '../../utils/uuid';
 
 import { findExerciseByName } from './exercises';
+import { DuplicateRoutineError } from '../../types';
 import type {
   Exercise,
   Routine,
@@ -55,6 +56,22 @@ function rowToRoutineExercise(row: RoutineExerciseRow): RoutineExercise {
 
 export interface RoutineListItem extends Routine {
   exercise_count: number;
+}
+
+// Case-insensitive name-collision check used by both create and update.
+// Returns the colliding routine (if any), excluding the optional `exceptId`.
+async function findCaseInsensitiveRoutineDuplicate(
+  db: SQLiteDatabase,
+  name: string,
+  exceptId?: string,
+): Promise<Pick<Routine, 'id' | 'name'> | null> {
+  const sql = exceptId
+    ? `SELECT id, name FROM routines WHERE LOWER(name) = LOWER(?) AND id <> ?;`
+    : `SELECT id, name FROM routines WHERE LOWER(name) = LOWER(?);`;
+  const row = exceptId
+    ? await db.getFirstAsync<Pick<Routine, 'id' | 'name'>>(sql, name, exceptId)
+    : await db.getFirstAsync<Pick<Routine, 'id' | 'name'>>(sql, name);
+  return row ?? null;
 }
 
 export async function listRoutines(
@@ -114,6 +131,9 @@ export async function createRoutine(
   if (!name) throw new Error('Routine name is required');
 
   await db.withTransactionAsync(async () => {
+    const dup = await findCaseInsensitiveRoutineDuplicate(db, name);
+    if (dup) throw new DuplicateRoutineError(name);
+
     await db.runAsync(
       `INSERT INTO routines (id, name, created_at, updated_at) VALUES (?, ?, ?, ?);`,
       id,
@@ -138,6 +158,9 @@ export async function updateRoutine(
   if (!name) throw new Error('Routine name is required');
 
   await db.withTransactionAsync(async () => {
+    const dup = await findCaseInsensitiveRoutineDuplicate(db, name, id);
+    if (dup) throw new DuplicateRoutineError(name);
+
     await db.runAsync(
       `UPDATE routines SET name = ?, updated_at = ? WHERE id = ?;`,
       name,

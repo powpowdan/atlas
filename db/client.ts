@@ -7,6 +7,7 @@ import { seedRoutinesIfEmpty } from './queries/routines';
 const INITIAL_VERSION = 1;
 const MIGRATION_V2 = 2;
 const MIGRATION_V3 = 3;
+const MIGRATION_V4 = 4;
 
 // [oldName, newName, newCategory] — applied before re-seed so INSERT OR IGNORE
 // sees catalog names and never duplicates. Idempotent: guarded by name match.
@@ -83,6 +84,10 @@ export async function migrateDb(db: SQLiteDatabase): Promise<void> {
     await applyMigrationV3(db);
   }
 
+  if (!applied.has(MIGRATION_V4)) {
+    await applyMigrationV4(db);
+  }
+
   await seedExercises(db);
   await seedRoutinesIfEmpty(db);
 }
@@ -129,6 +134,50 @@ async function applyMigrationV3(db: SQLiteDatabase): Promise<void> {
     await db.runAsync(
       `INSERT INTO schema_version (version, applied_at) VALUES (?, ?);`,
       MIGRATION_V3,
+      Date.now(),
+    );
+  });
+}
+
+async function applyMigrationV4(db: SQLiteDatabase): Promise<void> {
+  await db.withTransactionAsync(async () => {
+    // Dedupe case-insensitive duplicate routine names: keep the most
+    // recently updated name per group; suffix older duplicates with
+    // " (2)", " (3)", … probing case-insensitively so no rename lands on
+    // an existing name. updated_at is deliberately untouched so the
+    // routines list order is unchanged.
+    const rows = await db.getAllAsync<{ id: string; name: string }>(
+      `SELECT id, name FROM routines ORDER BY updated_at DESC, created_at DESC;`,
+    );
+    const taken = new Set(rows.map((r) => r.name.toLowerCase()));
+    const seen = new Set<string>();
+    for (const row of rows) {
+      const key = row.name.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        continue;
+      }
+      let suffix = 2;
+      let candidate: string;
+      do {
+        candidate = `${row.name} (${suffix})`;
+        suffix += 1;
+      } while (taken.has(candidate.toLowerCase()));
+      taken.add(candidate.toLowerCase());
+      await db.runAsync(
+        `UPDATE routines SET name = ? WHERE id = ?;`,
+        candidate,
+        row.id,
+      );
+    }
+
+    await db.execAsync(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_routines_name_unique ON routines(name COLLATE NOCASE);`,
+    );
+
+    await db.runAsync(
+      `INSERT INTO schema_version (version, applied_at) VALUES (?, ?);`,
+      MIGRATION_V4,
       Date.now(),
     );
   });

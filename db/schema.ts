@@ -98,4 +98,8 @@ export const INDEX_DDLS: DDLStatement[] = [
     name: 'idx_routines_updated_at',
     sql: `CREATE INDEX IF NOT EXISTS idx_routines_updated_at ON routines(updated_at DESC);`,
   },
+  {
+    name: 'idx_routines_name_unique',
+    sql: `CREATE UNIQUE INDEX IF NOT EXISTS idx_routines_name_unique ON routines(name COLLATE NOCASE);`,
+  },
 ];

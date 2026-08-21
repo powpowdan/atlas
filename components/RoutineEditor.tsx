@@ -2,6 +2,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { router, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,6 +15,7 @@ import DragList from 'react-native-draglist';
 
 import {
   createRoutine,
+  deleteRoutine,
   getRoutine,
   updateRoutine,
 } from '../db/queries/routines';
@@ -77,6 +79,29 @@ export default function RoutineEditor({ routineId }: Props) {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save routine');
     }
+  }
+
+  function confirmDelete() {
+    if (!routineId) return;
+    Alert.alert(
+      'Delete routine?',
+      `"${name}" and its exercise list will be permanently removed. Sessions you already logged with it are kept. This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteRoutine(db, routineId);
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)/routines');
+            }
+          },
+        },
+      ],
+    );
   }
 
   function reorder(from: number, to: number) {
@@ -187,6 +212,11 @@ export default function RoutineEditor({ routineId }: Props) {
             {isEdit ? 'Save changes' : 'Create routine'}
           </Text>
         </Pressable>
+        {isEdit ? (
+          <Pressable style={styles.deleteBtn} onPress={confirmDelete}>
+            <Text style={styles.deleteBtnText}>Delete routine</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       <ExercisePickerModal
@@ -260,4 +290,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveBtnText: { color: colors.paper, fontWeight: '600', fontSize: 16 },
+  deleteBtn: { marginTop: 12, alignItems: 'center', padding: 8 },
+  deleteBtnText: { color: colors.oxblood, fontWeight: '600', fontSize: 15 },
 });

@@ -2,6 +2,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -9,7 +10,11 @@ import {
   View,
 } from 'react-native';
 
-import { listRoutines, RoutineListItem } from '../../db/queries/routines';
+import {
+  deleteRoutine,
+  listRoutines,
+  RoutineListItem,
+} from '../../db/queries/routines';
 import { LogoMark } from '../../components/LogoMark';
 import { colors } from '../../constants/theme';
 
@@ -29,6 +34,27 @@ export default function RoutinesScreen() {
     }, [refresh]),
   );
 
+  const confirmDelete = useCallback(
+    (item: RoutineListItem) => {
+      Alert.alert(
+        'Delete routine?',
+        `"${item.name}" and its exercise list will be permanently removed. Sessions you already logged with it are kept. This cannot be undone.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              await deleteRoutine(db, item.id);
+              refresh();
+            },
+          },
+        ],
+      );
+    },
+    [db, refresh],
+  );
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -39,6 +65,7 @@ export default function RoutinesScreen() {
           <Pressable
             style={styles.listItem}
             onPress={() => router.push(`/routine/${item.id}`)}
+            onLongPress={() => confirmDelete(item)}
           >
             <Text style={styles.listItemName}>{item.name}</Text>
             <Text style={styles.listItemMeta}>
