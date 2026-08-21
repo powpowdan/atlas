@@ -12,5 +12,5 @@
 ## 3. Verification
 
 - [x] 3.1 Run `npm run typecheck` from WSL — clean
-- [ ] 3.2 Manual test from PowerShell (`npx expo start`): multi-exercise session — name pins while scrolling its block, next exercise's header pushes it off, tapping pinned name opens exercise detail, long name ellipsizes
-- [ ] 3.3 Manual regression: add/edit/delete sets, warmup toggle, reference-chip copy, carry-forward prefill, session note, add-exercise flow, complete/discard session all behave as before
+- [x] 3.2 Manual test from PowerShell (`npx expo start`): multi-exercise session — name pins while scrolling its block, next exercise's header pushes it off, tapping pinned name opens exercise detail, long name ellipsizes
+- [x] 3.3 Manual regression: add/edit/delete sets, warmup toggle, reference-chip copy, carry-forward prefill, session note, add-exercise flow, complete/discard session all behave as before
