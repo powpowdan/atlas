@@ -1,7 +1,7 @@
 ## 1. Dependency setup (PowerShell only)
 
-- [ ] 1.1 From PowerShell (not WSL), run `npx expo install react-native-svg` to add the SDK-54-compatible version
-- [ ] 1.2 Verify `metro.config.js` still excludes `.opencode` and that Metro starts cleanly with the new dependency
+- [x] 1.1 From PowerShell (not WSL), run `npx expo install react-native-svg` to add the SDK-54-compatible version
+- [x] 1.2 Verify `metro.config.js` still excludes `.opencode` and that Metro starts cleanly with the new dependency
 
 ## 2. Types
 
@@ -21,7 +21,7 @@
 - [x] 4.2 Render Y axis with ~5 gridlines labeled by value, scaling to the active metric's range; X axis with first/middle/last date tick labels
 - [x] 4.3 Render a `Polyline` connecting points when `points.length >= 2`; render a single `Circle` (no line) when `points.length === 1`
 - [x] 4.4 Render each point as a `Circle` wrapped in a tappable hit-area that calls `onDotPress(point.sessionId)`
-- [ ] 4.5 Verify the chart renders on iOS/Android with the existing flat styling (black line, system font, no fills)
+- [x] 4.5 Verify the chart renders on iOS/Android with the existing flat styling (black line, system font, no fills)
 
 ## 5. Progression screen
 
@@ -37,13 +37,13 @@
 
 - [x] 6.1 In `app/session/[id].tsx`, make the exercise name in each exercise block tappable; navigate to `/exercise/[exerciseId]`
 - [x] 6.2 In `app/history/[id].tsx`, make the exercise name in each exercise block tappable; navigate to `/exercise/[exerciseId]`
-- [ ] 6.3 Verify the back stack behaves: tapping through from a session detail and back returns to the session detail, not the sessions tab
+- [x] 6.3 Verify the back stack behaves: tapping through from a session detail and back returns to the session detail, not the sessions tab
 
 ## 7. Verification
 
 - [x] 7.1 Run `npm run typecheck` (WSL-safe) and resolve any errors
-- [ ] 7.2 Manually verify against the `progression` spec scenarios: open from session, open from history detail, empty state, single-session chart, metric switching, set-type filter switching, dot tap-through to session detail, name-once header (nav title, records summary first)
-- [ ] 7.3 Verify warmup toggle behavior: a session with only warmup sets for the exercise produces no dot under Working, but produces a dot under All or Warmup
+- [x] 7.2 Manually verify against the `progression` spec scenarios: open from session, open from history detail, empty state, single-session chart, metric switching, set-type filter switching, dot tap-through to session detail, name-once header (nav title, records summary first)
+- [x] 7.3 Verify warmup toggle behavior: a session with only warmup sets for the exercise produces no dot under Working, but produces a dot under All or Warmup
 
 ## 8. Unit labels + entry-point affordance
 
