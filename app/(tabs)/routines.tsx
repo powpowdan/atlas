@@ -59,6 +59,15 @@ export default function RoutinesScreen() {
           </View>
         }
       />
+      <View style={styles.libraryStrip}>
+        <Pressable
+          style={styles.libraryRow}
+          onPress={() => router.push('/exercise/manage')}
+        >
+          <Text style={styles.libraryLabel}>Exercise library</Text>
+          <Text style={styles.libraryChevron}>›</Text>
+        </Pressable>
+      </View>
       <Pressable
         style={styles.fab}
         onPress={() => router.push('/routine/new')}
@@ -79,6 +88,25 @@ const styles = StyleSheet.create({
   },
   listItemName: { fontSize: 17, fontWeight: '600', color: colors.ink },
   listItemMeta: { color: colors.inkSoft, fontSize: 13, marginTop: 2 },
+  libraryStrip: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.paperDeep,
+  },
+  libraryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  libraryLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.inkSoft,
+    letterSpacing: 0.5,
+  },
+  libraryChevron: { color: colors.textTertiary, fontSize: 16 },
   emptyWrap: { padding: 24, alignItems: 'center' },
   empty: { color: colors.textTertiary, marginBottom: 16, marginTop: 12 },
   button: {
@@ -92,7 +120,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 16,
-    bottom: 16,
+    bottom: 68,
     width: 56,
     height: 56,
     borderRadius: 28,

@@ -1,22 +1,7 @@
 import { Tabs } from 'expo-router';
-import { Pressable, Text } from 'react-native';
-import { useRouter } from 'expo-router';
 
 import { TabIcon } from '../../components/TabIcon';
 import { colors, fonts } from '../../constants/theme';
-
-function ManageHeaderButton() {
-  const router = useRouter();
-  return (
-    <Pressable
-      onPress={() => router.push('/exercise/manage')}
-      hitSlop={{ top: 16, bottom: 16, left: 24, right: 8 }}
-      style={{ paddingHorizontal: 4, paddingVertical: 6 }}
-    >
-      <Text style={{ color: colors.ink, fontWeight: '600' }}>Manage</Text>
-    </Pressable>
-  );
-}
 
 export default function TabsLayout() {
   return (
@@ -32,7 +17,6 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Sessions',
-          headerRight: () => <ManageHeaderButton />,
           tabBarIcon: ({ color }) => <TabIcon name="barbell" color={color} />,
         }}
       />
@@ -40,7 +24,6 @@ export default function TabsLayout() {
         name="routines"
         options={{
           title: 'Routines',
-          headerRight: () => <ManageHeaderButton />,
           tabBarIcon: ({ color }) => <TabIcon name="list" color={color} />,
         }}
       />

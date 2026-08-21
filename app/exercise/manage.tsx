@@ -50,7 +50,7 @@ export default function ManageExercisesScreen() {
   const [editing, setEditing] = useState<Exercise | undefined>(undefined);
 
   useEffect(() => {
-    navigation.setOptions({ title: 'Manage exercises' });
+    navigation.setOptions({ title: 'Exercise library' });
   }, []);
 
   const refresh = useCallback(async () => {
