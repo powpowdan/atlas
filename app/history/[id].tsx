@@ -316,10 +316,14 @@ export default function HistoryDetailScreen() {
         <View key={ex.id} style={styles.exerciseBlock}>
           <View style={styles.exerciseTitleRow}>
             <Pressable
-              style={{ flex: 1 }}
+              style={({ pressed }) => [
+                styles.exerciseNameBtn,
+                pressed && styles.exerciseNamePressed,
+              ]}
               onPress={() => router.push(`/exercise/${ex.exercise_id}`)}
             >
               <Text style={styles.exerciseName}>{ex.exercise?.name}</Text>
+              <Text style={styles.exerciseChevron}>›</Text>
             </Pressable>
             {editMode ? (
               <Pressable
@@ -502,7 +506,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  exerciseName: { fontSize: 17, fontWeight: '600', color: colors.ink },
+  exerciseNameBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  exerciseNamePressed: { opacity: 0.55 },
+  exerciseName: { fontSize: 17, fontWeight: '600', color: colors.verdigris },
+  exerciseChevron: { color: colors.verdigris, fontSize: 18, fontWeight: '600' },
   removeExerciseBtn: {
     paddingHorizontal: 10,
     paddingVertical: 4,

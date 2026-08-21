@@ -323,12 +323,18 @@ function ExerciseHeader({
   const lastSetTs = sets.length > 0 ? sets[sets.length - 1].created_at : null;
   return (
     <Pressable
-      style={styles.exerciseHeader}
+      style={({ pressed }) => [
+        styles.exerciseHeader,
+        pressed && styles.exerciseHeaderPressed,
+      ]}
       onPress={() => router.push(`/exercise/${sessionExercise.exercise_id}`)}
     >
-      <Text style={styles.exerciseName} numberOfLines={1}>
-        {sessionExercise.exercise?.name}
-      </Text>
+      <View style={styles.exerciseNameWrap}>
+        <Text style={styles.exerciseName} numberOfLines={1}>
+          {sessionExercise.exercise?.name}
+        </Text>
+        <Text style={styles.exerciseChevron}>›</Text>
+      </View>
       {showRestTimer && lastSetTs != null ? (
         <RestTimer anchorTs={lastSetTs} />
       ) : null}
@@ -755,7 +761,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 8,
     borderBottomColor: colors.borderSubtle,
   },
-  exerciseName: { fontSize: 18, fontWeight: '600', color: colors.ink },
+  exerciseNameWrap: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
+  exerciseName: { fontSize: 18, fontWeight: '600', color: colors.verdigris, flexShrink: 1 },
+  exerciseChevron: {
+    color: colors.verdigris,
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  exerciseHeaderPressed: { opacity: 0.55 },
   referenceBox: {
     marginBottom: 12,
     backgroundColor: colors.paperWell,

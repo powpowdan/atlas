@@ -38,7 +38,7 @@ The system SHALL compute an estimated one-rep maximum (1RM) for a set using the 
 
 #### Scenario: Higher reps at the same weight raises estimated 1RM
 
-- **WHEN** two sets exist at 50 kg, one at 5 reps and one at 8 reps
+- **WHEN** two sets exist at 50 lbs, one at 5 reps and one at 8 reps
 - **THEN** the 8-rep set has the higher estimated 1RM
 
 #### Scenario: Higher weight at lower reps may still win
@@ -77,12 +77,17 @@ The progression view SHALL provide a metric selector with four options: Estimate
 #### Scenario: Volume aggregates all selected-type sets in the session
 
 - **WHEN** a session contains working sets 50×8, 50×8, 50×7, 50×6 for an exercise and the user selects the Volume metric with the Working filter
-- **THEN** that session's dot value is 50×8 + 50×8 + 50×7 + 50×6 = 2900 kg total volume
+- **THEN** that session's dot value is 50×8 + 50×8 + 50×7 + 50×6 = 2900 lbs total volume
 
 #### Scenario: 1RM is the default metric on first open
 
 - **WHEN** the user opens the progression view for the first time for an exercise
 - **THEN** the chart is plotted with Estimated 1RM as the active metric
+
+#### Scenario: Weight-based axis labels use lbs
+
+- **WHEN** the chart is plotted with a weight-based metric (Estimated 1RM, Weight, or Volume)
+- **THEN** the Y-axis label includes the unit "lbs", matching the weight labels used across the app (`formatWeightLabel`)
 
 ### Requirement: Set-type filter on the chart
 
@@ -116,3 +121,17 @@ The system SHALL allow the user to tap a dot on the chart to navigate to the det
 
 - **WHEN** an exercise has been logged in exactly one qualifying session
 - **THEN** the chart displays a single dot with no connecting line, and tapping it opens that session
+
+### Requirement: Exercise-name tap targets are visually apparent
+
+In the in-progress session view and the past-session history view, each exercise name SHALL be rendered as a tappable control whose interactivity is visually apparent: the name SHALL use the app's interactive accent color (verdigris), display a trailing chevron (›), and show visible press feedback while pressed.
+
+#### Scenario: Exercise name at rest
+
+- **WHEN** an exercise block is rendered in the session view or a history detail view
+- **THEN** the exercise name appears in the accent color with a trailing chevron, distinguishing it from non-interactive labels
+
+#### Scenario: Press feedback on the exercise-name tap target
+
+- **WHEN** the user presses the exercise-name tap target
+- **THEN** the target visibly dims for the duration of the press

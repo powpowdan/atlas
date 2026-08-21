@@ -20,7 +20,7 @@ See `proposal.md` for motivation and scope; this document covers how.
 - No home-screen dashboard, no consistency/streak surface, no goals, no progression-model suggestions, no per-exercise increment configuration. Tracker only.
 - No chart polish (tooltips, crosshair, pinch-zoom, animated entry, gradient fills). Those wait for a dedicated styling pass.
 - No new tab; the chart is reached by tapping through from existing screens.
-- No unit conversion. The app does not track units today; weights are plotted as logged.
+- No unit conversion. The app does not track units today; weights are plotted as logged. Chart axis labels read `lbs`, matching the app-wide `formatWeightLabel` convention.
 
 ## Decisions
 
@@ -78,6 +78,12 @@ Most-reps record = existing `getMostRepsSet(exerciseId, setType)`.
 Best 1RM record = computed from the new progression query (the session with the highest per-session 1RM, then the specific set within it).
 
 The existing `getBestSet` / `getMostRepsSet` signatures take only `exerciseId` today and exclude warmups via a hardcoded `s.is_warmup = 0`. They will need a small signature extension to accept a set-type filter, OR the screen calls them only when the filter is Working and falls back to a new computation otherwise. Preferred: extend the signatures with an optional `setType` parameter defaulting to working, since the records summary must follow the filter (see spec: `progression/spec.md` → "Records summary on the progression view"). This is a backward-compatible additive change.
+
+### Decision: Entry-point affordance is accent color + chevron + press dim
+
+The exercise-name tap targets in `app/session/[id].tsx` and `app/history/[id].tsx` were wired but visually identical to static labels, so the progression screen was undiscoverable. Chosen treatment: render the name in verdigris (the app's established interactive accent — save/complete controls), append a `›` chevron, and dim the whole target (opacity ~0.55) while pressed.
+
+Alternatives considered: card-ifying the exercise block (rejected — fights the flat, ledger-like block layout and restyles far more than the tap target), hint text under the name (rejected — adds a permanent line of noise for a one-time discovery problem), brass accent (rejected — brass carries "PR" semantics on the chart's star markers).
 
 ### Decision: No new schema, no migrations
 

@@ -24,10 +24,10 @@ const PLOT_HEIGHT = VIEW_HEIGHT - PAD_TOP - PAD_BOTTOM;
 const GRIDLINE_COUNT = 5;
 
 const METRIC_LABEL: Record<ProgressionMetric, string> = {
-  e1rm: 'kg (est. 1RM)',
-  weight: 'kg',
+  e1rm: 'lbs (est. 1RM)',
+  weight: 'lbs',
   reps: 'reps',
-  volume: 'kg (volume)',
+  volume: 'lbs (volume)',
 };
 
 function valueForMetric(p: ProgressionPoint, metric: ProgressionMetric): number {

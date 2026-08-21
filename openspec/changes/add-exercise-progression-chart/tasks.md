@@ -44,3 +44,10 @@
 - [ ] 7.1 Run `npm run typecheck` (WSL-safe) and resolve any errors
 - [ ] 7.2 Manually verify against the `progression` spec scenarios: open from session, open from history detail, empty state, single-session chart, metric switching, set-type filter switching, dot tap-through to session detail
 - [ ] 7.3 Verify warmup toggle behavior: a session with only warmup sets for the exercise produces no dot under Working, but produces a dot under All or Warmup
+
+## 8. Unit labels + entry-point affordance
+
+- [x] 8.1 In `components/ProgressionChart.tsx`, fix `METRIC_LABEL`: `'kg'` → `'lbs'`, `'kg (est. 1RM)'` → `'lbs (est. 1RM)'`, `'kg (volume)'` → `'lbs (volume)'`
+- [x] 8.2 In `app/session/[id].tsx` `ExerciseHeader`: exercise name in verdigris, trailing `›` chevron, press-dim feedback
+- [x] 8.3 In `app/history/[id].tsx` exercise title row: same treatment (verdigris name, chevron, press dim)
+- [x] 8.4 Run `npm run typecheck` (WSL-safe) and resolve any errors
