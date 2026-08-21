@@ -56,6 +56,19 @@ interface SetRow {
   created_at: number;
 }
 
+export type SetSnapshot = SetRow;
+
+export interface SessionExerciseSnapshot {
+  id: string;
+  session_id: string;
+  exercise_id: string;
+  order_index: number;
+  note: string | null;
+  created_at: number;
+  exercise_name: string | null;
+  exercise_category: string | null;
+}
+
 function rowToSet(row: SetRow): WorkoutSet {
   return {
     id: row.id,
@@ -272,6 +285,90 @@ export async function updateSet(
 
 export async function deleteSet(db: SQLiteDatabase, id: string): Promise<void> {
   await db.runAsync(`DELETE FROM sets WHERE id = ?;`, id);
+}
+
+export async function snapshotSet(
+  db: SQLiteDatabase,
+  id: string,
+): Promise<SetSnapshot | null> {
+  return db.getFirstAsync<SetSnapshot>(
+    `SELECT id, session_exercise_id, weight, reps, is_warmup, note, created_at
+     FROM sets WHERE id = ?;`,
+    id,
+  );
+}
+
+export async function restoreSet(
+  db: SQLiteDatabase,
+  row: SetSnapshot,
+): Promise<void> {
+  await db.runAsync(
+    `INSERT INTO sets (id, session_exercise_id, weight, reps, is_warmup, note, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    row.id,
+    row.session_exercise_id,
+    row.weight,
+    row.reps,
+    row.is_warmup,
+    row.note,
+    row.created_at,
+  );
+}
+
+export async function snapshotSessionExercise(
+  db: SQLiteDatabase,
+  id: string,
+): Promise<{ exercise: SessionExerciseSnapshot; sets: SetSnapshot[] } | null> {
+  const exercise = await db.getFirstAsync<SessionExerciseSnapshot>(
+    `SELECT id, session_id, exercise_id, order_index, note, created_at,
+            exercise_name, exercise_category
+     FROM session_exercises WHERE id = ?;`,
+    id,
+  );
+  if (!exercise) return null;
+  const sets = await db.getAllAsync<SetSnapshot>(
+    `SELECT id, session_exercise_id, weight, reps, is_warmup, note, created_at
+     FROM sets WHERE session_exercise_id = ?
+     ORDER BY created_at ASC;`,
+    id,
+  );
+  return { exercise, sets };
+}
+
+export async function restoreSessionExercise(
+  db: SQLiteDatabase,
+  exercise: SessionExerciseSnapshot,
+  sets: SetSnapshot[],
+): Promise<void> {
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      `INSERT INTO session_exercises
+         (id, session_id, exercise_id, order_index, note, created_at,
+          exercise_name, exercise_category)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      exercise.id,
+      exercise.session_id,
+      exercise.exercise_id,
+      exercise.order_index,
+      exercise.note,
+      exercise.created_at,
+      exercise.exercise_name,
+      exercise.exercise_category,
+    );
+    for (const set of sets) {
+      await db.runAsync(
+        `INSERT INTO sets (id, session_exercise_id, weight, reps, is_warmup, note, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?);`,
+        set.id,
+        set.session_exercise_id,
+        set.weight,
+        set.reps,
+        set.is_warmup,
+        set.note,
+        set.created_at,
+      );
+    }
+  });
 }
 
 export async function markSessionComplete(

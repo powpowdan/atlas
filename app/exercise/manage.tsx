@@ -2,7 +2,6 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useNavigation } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Modal,
   Platform,
   Pressable,
@@ -28,27 +27,10 @@ import {
 } from '../../constants/categories';
 import { AnimatedCategorySection } from '../../components/AnimatedCategorySection';
 import { ExerciseEditorModal } from '../../components/ExerciseEditorModal';
+import { confirm } from '../../store/confirm';
+import { showUndoToast } from '../../store/undo';
 import { colors } from '../../constants/theme';
 import type { Exercise } from '../../types';
-
-function confirmDiscard(message: string, onConfirm: () => void) {
-  if (Platform.OS === 'web') {
-    if (window.confirm(message)) onConfirm();
-  } else {
-    Alert.alert(message, undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Confirm', style: 'destructive', onPress: onConfirm },
-    ]);
-  }
-}
-
-function notify(message: string) {
-  if (Platform.OS === 'web') {
-    window.alert(message);
-  } else {
-    Alert.alert(message);
-  }
-}
 
 type Filter = 'active' | 'archived';
 
@@ -223,11 +205,15 @@ export default function ManageExercisesScreen() {
     );
   }
 
-  function handleArchive(ex: Exercise) {
-    confirmDiscard(`Archive "${ex.name}"? It will be hidden from pickers but kept in your history.`, async () => {
-      await archiveExercise(db, ex.id);
-      refresh();
+  async function handleArchive(ex: Exercise) {
+    const ok = await confirm({
+      title: `Archive "${ex.name}"?`,
+      message: 'It will be hidden from pickers but kept in your history.',
+      confirmLabel: 'Archive',
     });
+    if (!ok) return;
+    await archiveExercise(db, ex.id);
+    refresh();
   }
 
   async function handleRestore(ex: Exercise) {
@@ -235,14 +221,15 @@ export default function ManageExercisesScreen() {
     refresh();
   }
 
-  function handleDelete(ex: Exercise) {
-    confirmDiscard(
-      `Delete "${ex.name}" permanently? Its history stays in past sessions, but it can't be reused.`,
-      async () => {
-        await deleteExercise(db, ex.id);
-        refresh();
-      },
-    );
+  async function handleDelete(ex: Exercise) {
+    const ok = await confirm({
+      title: `Delete "${ex.name}"?`,
+      message: "Its history stays in past sessions, but it can't be reused.",
+      confirmLabel: 'Delete',
+    });
+    if (!ok) return;
+    await deleteExercise(db, ex.id);
+    refresh();
   }
 
   function openCategoryActions(category: string) {
@@ -298,7 +285,7 @@ export default function ManageExercisesScreen() {
     const parts: string[] = [];
     if (counts.active > 0) parts.push(`${counts.active} active`);
     if (counts.archived > 0) parts.push(`${counts.archived} archived`);
-    notify(
+    showUndoToast(
       `Can't delete "${category}": ${counts.total} exercise${counts.total === 1 ? '' : 's'} still reference${counts.total === 1 ? 's' : ''} it (${parts.join(' and ')}). Rename/Merge the category, or delete its remaining exercises first.`,
     );
   }

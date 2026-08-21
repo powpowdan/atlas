@@ -9,6 +9,7 @@ const MIGRATION_V2 = 2;
 const MIGRATION_V3 = 3;
 const MIGRATION_V4 = 4;
 const MIGRATION_V5 = 5;
+const MIGRATION_V6 = 6;
 
 // [oldName, newName, newCategory] — applied before re-seed so INSERT OR IGNORE
 // sees catalog names and never duplicates. Idempotent: guarded by name match.
@@ -97,6 +98,42 @@ export async function migrateDb(db: SQLiteDatabase): Promise<void> {
       `ALTER TABLE session_exercises ADD COLUMN exercise_category TEXT NULL;`,
     ]);
   }
+
+  // v6: purge orphaned child rows left behind by pre-FK-enforcement deletes,
+  // then rebuild session_exercises without its exercise_id foreign key.
+  // deleteExercise intentionally keeps session_exercises rows (frozen name
+  // snapshots) after the exercise is gone, so that FK must not exist once
+  // PRAGMA foreign_keys is enforced below.
+  if (!applied.has(MIGRATION_V6)) {
+    await applyMigration(db, MIGRATION_V6, [
+      `DELETE FROM sets
+       WHERE session_exercise_id NOT IN (SELECT id FROM session_exercises);`,
+      `DELETE FROM session_exercises
+       WHERE session_id NOT IN (SELECT id FROM sessions);`,
+      `DELETE FROM routine_exercises
+       WHERE routine_id NOT IN (SELECT id FROM routines);`,
+      `CREATE TABLE session_exercises_v6 (
+         id                TEXT PRIMARY KEY NOT NULL,
+         session_id        TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+         exercise_id       TEXT NOT NULL,
+         order_index       INTEGER NOT NULL,
+         note              TEXT,
+         created_at        INTEGER NOT NULL,
+         exercise_name     TEXT,
+         exercise_category TEXT
+       );`,
+      `INSERT INTO session_exercises_v6
+         (id, session_id, exercise_id, order_index, note, created_at, exercise_name, exercise_category)
+       SELECT id, session_id, exercise_id, order_index, note, created_at, exercise_name, exercise_category
+       FROM session_exercises;`,
+      `DROP TABLE session_exercises;`,
+      `ALTER TABLE session_exercises_v6 RENAME TO session_exercises;`,
+      `CREATE INDEX IF NOT EXISTS idx_session_exercises_exercise_id
+         ON session_exercises(exercise_id);`,
+    ]);
+  }
+
+  await db.execAsync(`PRAGMA foreign_keys = ON;`);
 
   await seedExercises(db);
   await seedRoutinesIfEmpty(db);

@@ -2,7 +2,6 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Keyboard,
   Modal,
   Platform,
@@ -23,7 +22,9 @@ import {
   deleteSet,
   getSession,
   markSessionComplete,
+  restoreSet,
   setSessionNote,
+  snapshotSet,
   updateSet,
 } from '../../db/queries/sessions';
 import { ExercisePickerModal } from '../../components/ExercisePickerModal';
@@ -31,6 +32,8 @@ import { RestTimer } from '../../components/RestTimer';
 import { SessionSummaryModal } from '../../components/SessionSummaryModal';
 import { useExerciseReference } from '../../hooks/useExerciseReference';
 import { useActiveSessionStore } from '../../store/activeSession';
+import { confirm } from '../../store/confirm';
+import { showUndoToast } from '../../store/undo';
 import { colors, type } from '../../constants/theme';
 import {
   computeSessionSummary,
@@ -133,28 +136,22 @@ export default function SessionScreen() {
     }
   }
 
-  function handleDiscard() {
+  async function handleDiscard() {
     if (!id) return;
-    Alert.alert(
-      'Discard session?',
-      'This deletes the session and all of its sets. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Discard',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteSession(db, id);
-            if (activeSessionId === id) clearActiveSession();
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/(tabs)/index');
-            }
-          },
-        },
-      ],
-    );
+    const ok = await confirm({
+      title: 'Discard session?',
+      message:
+        'This deletes the session and all of its sets. This cannot be undone.',
+      confirmLabel: 'Discard',
+    });
+    if (!ok) return;
+    await deleteSession(db, id);
+    if (activeSessionId === id) clearActiveSession();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/index');
+    }
   }
 
   async function handleSaveNote() {
@@ -464,21 +461,13 @@ function ExerciseBody({
   }
 
   async function removeSet(s: WorkoutSet) {
-    Alert.alert(
-      'Delete set?',
-      `${formatWeightLabel(s.weight)} × ${s.reps}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteSet(db, s.id);
-            onChanged();
-          },
-        },
-      ],
-    );
+    const snapshot = await snapshotSet(db, s.id);
+    await deleteSet(db, s.id);
+    onChanged();
+    showUndoToast('Set deleted', async () => {
+      if (snapshot) await restoreSet(db, snapshot);
+      onChanged();
+    });
   }
 
   function copyFromReference(slot: ReferenceSlot) {

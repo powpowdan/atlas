@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS session_exercises (
   id           TEXT PRIMARY KEY NOT NULL,
   session_id   TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-  exercise_id  TEXT NOT NULL REFERENCES exercises(id),
+  exercise_id  TEXT NOT NULL,
   order_index  INTEGER NOT NULL,
   note         TEXT,
   created_at   INTEGER NOT NULL,

@@ -2,7 +2,6 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { router, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -20,6 +19,8 @@ import {
   updateRoutine,
 } from '../db/queries/routines';
 import { ExercisePickerModal } from './ExercisePickerModal';
+import { confirm } from '../store/confirm';
+import { showUndoToast } from '../store/undo';
 import { colors, type } from '../constants/theme';
 import type { Exercise } from '../types';
 
@@ -81,27 +82,21 @@ export default function RoutineEditor({ routineId }: Props) {
     }
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!routineId) return;
-    Alert.alert(
-      'Delete routine?',
-      `"${name}" and its exercise list will be permanently removed. Sessions you already logged with it are kept. This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteRoutine(db, routineId);
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/(tabs)/routines');
-            }
-          },
-        },
-      ],
-    );
+    const ok = await confirm({
+      title: 'Delete routine?',
+      message: `"${name}" and its exercise list will be permanently removed.`,
+      detail: 'Logged sessions are kept. This cannot be undone.',
+      confirmLabel: 'Delete',
+    });
+    if (!ok) return;
+    await deleteRoutine(db, routineId);
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/routines');
+    }
   }
 
   function reorder(from: number, to: number) {
@@ -125,7 +120,19 @@ export default function RoutineEditor({ routineId }: Props) {
   }
 
   function removeAt(index: number) {
+    const id = selected[index];
     setSelected((prev) => prev.filter((_, i) => i !== index));
+    showUndoToast('Exercise removed', () => {
+      setSelected((prev) => {
+        if (prev.includes(id)) return prev;
+        const next = [...prev];
+        next.splice(Math.min(index, next.length), 0, id);
+        return next;
+      });
+      // Same DragList remount as reorder(): stale native drag transforms
+      // on Fabric leave the re-inserted cell blank until remounted.
+      setListEpoch((e) => e + 1);
+    });
   }
 
   function handlePickerSelect(exercise: Exercise) {

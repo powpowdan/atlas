@@ -5,6 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 
 import { migrateDb } from '../db/client';
 import { colors, fonts } from '../constants/theme';
+import { ConfirmSheet } from '../components/ConfirmSheet';
+import { UndoToast } from '../components/UndoToast';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({ Fraunces_600SemiBold });
@@ -28,6 +30,8 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="session/[id]" options={{ headerShown: false }} />
         </Stack>
+        <ConfirmSheet />
+        <UndoToast />
       </SQLiteProvider>
     </>
   );

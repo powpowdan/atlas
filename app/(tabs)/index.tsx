@@ -3,7 +3,6 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
 
 import { deleteSession, getActiveSession } from '../../db/queries/sessions';
 import { useActiveSessionStore } from '../../store/activeSession';
+import { confirm } from '../../store/confirm';
 import { LogoMark } from '../../components/LogoMark';
 import { colors, type } from '../../constants/theme';
 import type { SessionListItem } from '../../db/queries/sessions';
@@ -45,24 +45,18 @@ export default function SessionsScreen() {
     }, [refresh]),
   );
 
-  function handleDiscard() {
+  async function handleDiscard() {
     if (!active) return;
-    Alert.alert(
-      'Discard session?',
-      'This deletes the in-progress session and all of its sets. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Discard',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteSession(db, active.id);
-            if (activeSessionId === active.id) clearActiveSession();
-            refresh();
-          },
-        },
-      ],
-    );
+    const ok = await confirm({
+      title: 'Discard session?',
+      message:
+        'This deletes the in-progress session and all of its sets. This cannot be undone.',
+      confirmLabel: 'Discard',
+    });
+    if (!ok) return;
+    await deleteSession(db, active.id);
+    if (activeSessionId === active.id) clearActiveSession();
+    refresh();
   }
 
   if (checking || !hydrated) {

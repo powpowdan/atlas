@@ -2,7 +2,6 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   Modal,
   Platform,
   Pressable,
@@ -21,10 +20,16 @@ import {
   deleteSet,
   getSession,
   removeExerciseFromSession,
+  restoreSessionExercise,
+  restoreSet,
   setSessionNote,
+  snapshotSessionExercise,
+  snapshotSet,
   updateSet,
 } from '../../db/queries/sessions';
 import { ExercisePickerModal } from '../../components/ExercisePickerModal';
+import { confirm } from '../../store/confirm';
+import { showUndoToast } from '../../store/undo';
 import { colors, type } from '../../constants/theme';
 import { formatDuration, formatWeightLabel } from '../../utils/format';
 import type { Exercise, SessionDetail, SessionExercise, WorkoutSet } from '../../types';
@@ -88,27 +93,21 @@ export default function HistoryDetailScreen() {
     });
   }, [navigation, session?.status, editMode]);
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!id || !session) return;
-    Alert.alert(
-      'Delete session?',
-      'This permanently removes the session and all of its sets. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteSession(db, id);
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/(tabs)/history');
-            }
-          },
-        },
-      ],
-    );
+    const ok = await confirm({
+      title: 'Delete session?',
+      message:
+        'This permanently removes the session and all of its sets. This cannot be undone.',
+      confirmLabel: 'Delete',
+    });
+    if (!ok) return;
+    await deleteSession(db, id);
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/history');
+    }
   }
 
   async function reload() {
@@ -206,46 +205,32 @@ export default function HistoryDetailScreen() {
     }
   }
 
-  function handleDeleteSet(s: WorkoutSet) {
-    Alert.alert('Delete set?', `${formatWeightLabel(s.weight)} × ${s.reps}`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          if (formMode?.kind === 'edit' && formMode.set.id === s.id) {
-            cancelForm();
-          }
-          await deleteSet(db, s.id);
-          reload();
-        },
-      },
-    ]);
+  async function handleDeleteSet(s: WorkoutSet) {
+    if (formMode?.kind === 'edit' && formMode.set.id === s.id) {
+      cancelForm();
+    }
+    const snapshot = await snapshotSet(db, s.id);
+    await deleteSet(db, s.id);
+    reload();
+    showUndoToast('Set deleted', async () => {
+      if (snapshot) await restoreSet(db, snapshot);
+      reload();
+    });
   }
 
-  function handleRemoveExercise(ex: SessionExercise) {
-    Alert.alert(
-      'Remove exercise?',
-      `This removes ${ex.exercise?.name ?? 'this exercise'} and all of its sets from this session. This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            if (
-              formMode?.kind === 'edit'
-                ? formMode.set.session_exercise_id === ex.id
-                : formMode?.kind === 'add' && formMode.sessionExerciseId === ex.id
-            ) {
-              cancelForm();
-            }
-            await removeExerciseFromSession(db, ex.id);
-            reload();
-          },
-        },
-      ],
-    );
+  async function handleRemoveExercise(ex: SessionExercise) {
+    if (formBelongsTo(ex.id)) {
+      cancelForm();
+    }
+    const snapshot = await snapshotSessionExercise(db, ex.id);
+    await removeExerciseFromSession(db, ex.id);
+    reload();
+    showUndoToast('Exercise removed', async () => {
+      if (snapshot) {
+        await restoreSessionExercise(db, snapshot.exercise, snapshot.sets);
+      }
+      reload();
+    });
   }
 
   async function handlePickExercise(exercise: Exercise) {
