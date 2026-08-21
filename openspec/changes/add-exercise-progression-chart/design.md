@@ -85,6 +85,12 @@ The exercise-name tap targets in `app/session/[id].tsx` and `app/history/[id].ts
 
 Alternatives considered: card-ifying the exercise block (rejected — fights the flat, ledger-like block layout and restyles far more than the tap target), hint text under the name (rejected — adds a permanent line of noise for a one-time discovery problem), brass accent (rejected — brass carries "PR" semantics on the chart's star markers).
 
+### Decision: Exercise name lives only in the nav header; no in-body header block
+
+The screen sets the nav title to the exercise name and initially also rendered the name (plus the exercise's category) as an in-body header block — the same name duplication the history detail header had (see archived `simplify-history-detail-header`). Revised: the name is displayed exactly once, in the sticky nav header (the platform's title slot, stays visible while scrolled). The in-body header block is removed entirely; the records summary becomes the first content under the nav header. The category line is dropped rather than promoted — it is incidental metadata, already visible on the exercise manage screen, and a lone category line reads as clutter under a title the nav header already carries.
+
+Alternatives considered: keep the in-body title and blank the nav header (wastes the always-visible slot, keeps the larger layout block), promote the category to a heading line (rejected — secondary metadata promoted to fill space, not information the user needs here).
+
 ### Decision: No new schema, no migrations
 
 `getExerciseProgress(exerciseId, setType)` reads `sets`, `session_exercises`, `sessions` directly. Existing indexes (`idx_session_exercises_exercise_id`, `idx_sessions_started_at`, `idx_sets_session_exercise_warmup`) cover the joins and filters. At personal-scale data volumes (low thousands of sets), performance is not a concern.

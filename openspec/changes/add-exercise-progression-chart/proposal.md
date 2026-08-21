@@ -4,7 +4,7 @@ The app logs sets and surfaces point-in-time extremes (heaviest, most-reps, last
 
 ## What Changes
 
-- A new per-exercise screen surfaces an all-time records summary, a metric selector, a set-type filter, and a line chart of one dot per session.
+- A new per-exercise screen surfaces the exercise's name (exactly once, in the nav header) above an all-time records summary, a metric selector, a set-type filter, and a line chart of one dot per session.
 - The chart defaults to **estimated 1RM (Epley)**, with Weight, Reps, and Volume as alternative metrics the user can toggle.
 - One dot per qualifying completed session; "qualifying" inherits the rule from the in-flight `last-session-requires-logged-sets` change (≥1 working set for the exercise).
 - Set-type filter defaults to working sets only, with a toggle to include warmups (matches FitNotes).

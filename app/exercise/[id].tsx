@@ -99,11 +99,6 @@ export default function ExerciseProgressionScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{exercise.name}</Text>
-        <Text style={styles.subtitle}>{exercise.category ?? '—'}</Text>
-      </View>
-
       <View style={styles.recordsRow}>
         <RecordCell label="Heaviest" data={heaviest} />
         <RecordCell label="Most reps" data={mostReps} />
@@ -178,9 +173,6 @@ function RecordCell({ label, data }: RecordCellProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paper },
-  header: { padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-  title: { ...type.title, color: colors.ink },
-  subtitle: { ...type.meta, color: colors.inkSoft, marginTop: 4 },
   recordsRow: {
     flexDirection: 'row',
     padding: 16,

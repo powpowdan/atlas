@@ -41,8 +41,8 @@
 
 ## 7. Verification
 
-- [ ] 7.1 Run `npm run typecheck` (WSL-safe) and resolve any errors
-- [ ] 7.2 Manually verify against the `progression` spec scenarios: open from session, open from history detail, empty state, single-session chart, metric switching, set-type filter switching, dot tap-through to session detail
+- [x] 7.1 Run `npm run typecheck` (WSL-safe) and resolve any errors
+- [ ] 7.2 Manually verify against the `progression` spec scenarios: open from session, open from history detail, empty state, single-session chart, metric switching, set-type filter switching, dot tap-through to session detail, name-once header (nav title, records summary first)
 - [ ] 7.3 Verify warmup toggle behavior: a session with only warmup sets for the exercise produces no dot under Working, but produces a dot under All or Warmup
 
 ## 8. Unit labels + entry-point affordance
@@ -51,3 +51,8 @@
 - [x] 8.2 In `app/session/[id].tsx` `ExerciseHeader`: exercise name in verdigris, trailing `›` chevron, press-dim feedback
 - [x] 8.3 In `app/history/[id].tsx` exercise title row: same treatment (verdigris name, chevron, press dim)
 - [x] 8.4 Run `npm run typecheck` (WSL-safe) and resolve any errors
+
+## 9. Screen header simplification
+
+- [x] 9.1 In `app/exercise/[id].tsx`, remove the in-body header block (exercise-name title and category line) and the now-unused `title`, `subtitle`/`headerCategory`, and `header` styles; the nav header title stays the single display of the name, and the records summary becomes the first content
+- [x] 9.2 Run `npm run typecheck` (WSL-safe) and resolve any errors

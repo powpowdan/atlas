@@ -6,12 +6,12 @@ Show, for any exercise in the library, a retrospective view of how the user has 
 
 ### Requirement: Per-exercise progression view
 
-The system SHALL provide a per-exercise progression screen reachable by tapping the exercise's name from an in-progress session or a past session's detail view. The screen SHALL display the exercise's name, an all-time records summary, a metric selector, a set-type filter, and a line chart plotting one dot per qualifying session over time.
+The system SHALL provide a per-exercise progression screen reachable by tapping the exercise's name from an in-progress session or a past session's detail view. The screen SHALL display the exercise's name exactly once, in the screen's navigation header. Below it, the screen SHALL display an all-time records summary, a metric selector, a set-type filter, and a line chart plotting one dot per qualifying session over time.
 
 #### Scenario: Open the progression view from a session
 
 - **WHEN** the user taps an exercise's name while logging or viewing a session
-- **THEN** the per-exercise progression screen opens for that exercise, showing its records summary, metric selector, set-type filter, and chart
+- **THEN** the per-exercise progression screen opens for that exercise, showing its name once in the navigation header, then its records summary, metric selector, set-type filter, and chart
 
 #### Scenario: Exercise never logged
 
