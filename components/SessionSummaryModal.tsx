@@ -20,7 +20,7 @@ export function SessionSummaryModal({
     <Modal visible transparent animationType="fade" onRequestClose={onDone}>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <LogoMark size={120} />
+          <LogoMark size={90} />
           <View style={styles.stamp}>
             <Text style={styles.stampText}>Session complete</Text>
           </View>

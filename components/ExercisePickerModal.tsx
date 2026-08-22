@@ -180,7 +180,7 @@ export function ExercisePickerModal({
 function EmptyState({ query, onCreate }: { query: string; onCreate: () => void }) {
   return (
     <View style={styles.emptyWrap}>
-      <LogoMark size={200} />
+      <LogoMark size={110} />
       <Text style={styles.empty}>
         {query
           ? `No exercises match "${query}".`

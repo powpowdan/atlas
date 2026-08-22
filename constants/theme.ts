@@ -28,7 +28,7 @@ export const fonts = {
 export const type = {
   wordmark: {
     fontFamily: fonts.display,
-    fontSize: 22,
+    fontSize: 23,
     textTransform: 'uppercase',
     letterSpacing: 3,
   } as TextStyle,

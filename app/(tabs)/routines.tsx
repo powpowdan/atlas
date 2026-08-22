@@ -69,7 +69,7 @@ export default function RoutinesScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <LogoMark size={200} />
+            <LogoMark size={110} />
             <Text style={styles.empty}>No routines yet.</Text>
             <Pressable
               style={styles.button}

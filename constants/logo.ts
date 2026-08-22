@@ -1,5 +1,7 @@
-export const LOGO_VIEW_WIDTH = 600;
-export const LOGO_VIEW_HEIGHT = 328;
+export const LOGO_VIEW_X = 226.7;
+export const LOGO_VIEW_Y = 10;
+export const LOGO_VIEW_WIDTH = 158;
+export const LOGO_VIEW_HEIGHT = 299.9;
 export const LOGO_GROUP_TRANSFORM = 'translate(0,328) scale(0.1,-0.1)';
 
 export const LOGO_PATHS: readonly string[] = [

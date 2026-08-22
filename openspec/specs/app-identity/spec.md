@@ -46,7 +46,7 @@ The app SHALL use the Fraunces typeface only for the ATLAS wordmark (rendered in
 
 ### Requirement: Recolorable logo mark with size tiers
 
-The app SHALL render the Atlas logo as a single-color scalable mark that inherits a theme color (ink, paper, or brass) from its context. The mark SHALL be used only at supported sizes: hero (≥200px, splash and empty states) and mid (~80px, summary cards); it SHALL NOT be rendered below 80px where trace detail breaks down.
+The app SHALL render the Atlas logo as a single-color scalable mark that inherits a theme color (ink, paper, or brass) from its context. The mark's viewBox SHALL be cropped to the artwork's bounding box (portrait) so the rendered size reflects visible ink. The mark SHALL be used only at supported sizes: ~110px (start card and empty states) and ~90px (session summary); it SHALL NOT be rendered below ~60px where trace detail breaks down.
 
 #### Scenario: Logo on empty state
 

@@ -96,7 +96,7 @@ export default function SessionsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.startCard}>
-        <LogoMark size={400} />
+        <LogoMark size={110} />
         <Text style={styles.wordmark}>ATLAS</Text>
         <Text style={styles.startHelp}>
           Start a new workout, either from a routine or ad-hoc.
