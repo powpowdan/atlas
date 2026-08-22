@@ -69,7 +69,7 @@ The chart SHALL plot exactly one dot per qualifying completed session, ordered b
 
 ### Requirement: Metric selector on the chart
 
-The progression view SHALL provide a metric selector with four options: Estimated 1RM, Weight, Reps, and Volume. Estimated 1RM SHALL be the default. Selecting a metric SHALL re-plot the chart using the same set of sessions, with each dot's value recomputed for the selected metric. Volume for a session SHALL be the sum of `weight × reps` across all of the session's selected-type sets for the exercise.
+The progression view SHALL provide a metric selector with four options: Weight, Estimated 1RM, Reps, and Volume. Weight SHALL be the default. Selecting a metric SHALL re-plot the chart using the same set of sessions, with each dot's value recomputed for the selected metric. Volume for a session SHALL be the sum of `weight × reps` across all of the session's selected-type sets for the exercise.
 
 #### Scenario: Switch from 1RM to Weight
 
@@ -81,10 +81,10 @@ The progression view SHALL provide a metric selector with four options: Estimate
 - **WHEN** a session contains working sets 50×8, 50×8, 50×7, 50×6 for an exercise and the user selects the Volume metric with the Working filter
 - **THEN** that session's dot value is 50×8 + 50×8 + 50×7 + 50×6 = 2900 lbs total volume
 
-#### Scenario: 1RM is the default metric on first open
+#### Scenario: Weight is the default metric on first open
 
 - **WHEN** the user opens the progression view for the first time for an exercise
-- **THEN** the chart is plotted with Estimated 1RM as the active metric
+- **THEN** the chart is plotted with Weight as the active metric
 
 #### Scenario: Weight-based axis labels use lbs
 
