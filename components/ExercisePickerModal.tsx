@@ -1,5 +1,4 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
@@ -44,7 +43,6 @@ export function ExercisePickerModal({
   onClose,
 }: ExercisePickerModalProps) {
   const db = useSQLiteContext();
-  const router = useRouter();
   const [library, setLibrary] = useState<Exercise[]>([]);
   const [query, setQuery] = useState('');
   const [editorOpen, setEditorOpen] = useState(false);
@@ -86,13 +84,6 @@ export function ExercisePickerModal({
     if (autoCloseOnSelect) onClose();
   }
 
-  function handleManage() {
-    // Close before pushing: a pushed screen renders underneath an open
-    // full-screen Modal on both platforms.
-    onClose();
-    router.push('/exercise/manage');
-  }
-
   function handleCreated(exercise: Exercise) {
     setEditorOpen(false);
     // Refresh the underlying list, then immediately select the new row.
@@ -111,13 +102,12 @@ export function ExercisePickerModal({
         <View style={styles.modalBody}>
           <View style={styles.modalHeader}>
             <Pressable onPress={onClose}>
-              <Text style={styles.modalCancel}>Cancel</Text>
+              <Text style={styles.modalCancel}>
+                {autoCloseOnSelect ? 'Cancel' : 'Done'}
+              </Text>
             </Pressable>
-            <Text style={styles.modalTitle}>Add exercise</Text>
+            <Text style={styles.modalTitle}>Add exercises</Text>
             <View style={styles.headerActions}>
-              <Pressable onPress={handleManage}>
-                <Text style={styles.modalManage}>Manage</Text>
-              </Pressable>
               <Pressable onPress={() => setEditorOpen(true)}>
                 <Text style={styles.modalNew}>+ New</Text>
               </Pressable>
@@ -213,10 +203,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  modalTitle: { ...type.modalTitle, color: colors.ink },
+  modalTitle: { ...type.title, color: colors.ink },
   modalCancel: { ...type.action, color: colors.inkSoft },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  modalManage: { ...type.action, color: colors.inkSoft },
   modalNew: { ...type.cta, color: colors.ink },
   searchWrap: { padding: 12 },
   searchInput: {

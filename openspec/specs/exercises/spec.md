@@ -123,14 +123,24 @@ The system SHALL expose a persistent entry point to the exercise management scre
 - **WHEN** the user is on the Sessions tab
 - **THEN** no exercise management entry point is shown in the tab header (creating an exercise mid-session remains available via the exercise picker's "New" action)
 
-### Requirement: Contextual entry point from the exercise picker
+### Requirement: Picker exit control reflects selection mode
 
-The system SHALL expose a "Manage" action in the exercise picker modal header. Activating it SHALL close the picker and open the exercise management screen.
+The exercise picker's left header control SHALL be labeled "Done" when the picker applies selections live and supports selecting multiple exercises before exiting, and "Cancel" when the picker closes after a single selection. In multi-select mode, activating the control SHALL close the picker and keep all selections made so far; exiting SHALL NOT revert or discard them.
 
-#### Scenario: Open management from the picker
+#### Scenario: Multi-select picker shows Done and keeps picks
 
-- **WHEN** the exercise picker modal is open and the user activates the "Manage" action in its header
-- **THEN** the picker closes and the exercise management screen opens
+- **WHEN** the user opens the exercise picker from the routine editor, taps several exercise rows, then activates the "Done" control in the header
+- **THEN** the picker closes and every tapped exercise remains in the routine's exercise list
+
+#### Scenario: Single-select picker keeps Cancel semantics
+
+- **WHEN** the user opens the exercise picker from a session or history screen, taps no rows, and activates the header control
+- **THEN** the picker closes and no exercise is added
+
+#### Scenario: No management entry from the picker
+
+- **WHEN** the exercise picker is open in any context
+- **THEN** its header offers no action that navigates to the exercise management screen
 
 ### Requirement: Type-to-filter search in the exercise picker
 
