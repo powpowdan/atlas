@@ -22,8 +22,8 @@ import type {
 } from '../../types';
 
 const METRICS: Array<{ key: ProgressionMetric; label: string }> = [
-  { key: 'e1rm', label: '1RM' },
   { key: 'weight', label: 'Weight' },
+  { key: 'e1rm', label: '1RM' },
   { key: 'reps', label: 'Reps' },
   { key: 'volume', label: 'Volume' },
 ];
@@ -45,7 +45,7 @@ export default function ExerciseProgressionScreen() {
   const [mostReps, setMostReps] = useState<BestLastResult | null>(null);
   const [bestE1rm, setBestE1rm] = useState<BestLastResult | null>(null);
   const [points, setPoints] = useState<ProgressionPoint[]>([]);
-  const [metric, setMetric] = useState<ProgressionMetric>('e1rm');
+  const [metric, setMetric] = useState<ProgressionMetric>('weight');
   const [setType, setSetType] = useState<SetTypeFilter>('working');
 
   const load = useCallback(async () => {

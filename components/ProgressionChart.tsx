@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Line, Path, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import { colors, type } from '../constants/theme';
@@ -12,15 +12,15 @@ interface ProgressionChartProps {
 }
 
 // Layout constants for the chart's internal SVG coordinate space.
-// We render into a fixed viewBox and let the parent scale via width.
-const VIEW_WIDTH = 320;
-const VIEW_HEIGHT = 180;
+// The width is responsive (fills the screen minus the wrap's 8px horizontal
+// padding × 2, floored at 320 for narrow splitscreen), while the height is
+// fixed. Scale stays ~1.0 on phones, so fonts render at true size.
+const MIN_VIEW_WIDTH = 320;
+const VIEW_HEIGHT = 240;
 const PAD_LEFT = 36;
 const PAD_RIGHT = 12;
 const PAD_TOP = 12;
 const PAD_BOTTOM = 24;
-const PLOT_WIDTH = VIEW_WIDTH - PAD_LEFT - PAD_RIGHT;
-const PLOT_HEIGHT = VIEW_HEIGHT - PAD_TOP - PAD_BOTTOM;
 const GRIDLINE_COUNT = 5;
 
 const METRIC_LABEL: Record<ProgressionMetric, string> = {
@@ -85,18 +85,23 @@ function computeBounds(values: number[]): { min: number; max: number } {
 }
 
 export function ProgressionChart({ points, metric, onDotPress }: ProgressionChartProps) {
+  const { width: windowWidth } = useWindowDimensions();
+  const viewWidth = Math.max(windowWidth - 16, MIN_VIEW_WIDTH);
+  const plotWidth = viewWidth - PAD_LEFT - PAD_RIGHT;
+  const plotHeight = VIEW_HEIGHT - PAD_TOP - PAD_BOTTOM;
+
   const { xPositions, yPositions, gridValues, xTickIndices, prFlags } = useMemo(() => {
     const values = points.map((p) => valueForMetric(p, metric));
     const { min, max } = computeBounds(values);
     const range = max - min || 1;
 
     const xPositions = points.map((_, i) => {
-      if (points.length === 1) return PAD_LEFT + PLOT_WIDTH / 2;
-      return PAD_LEFT + (i / (points.length - 1)) * PLOT_WIDTH;
+      if (points.length === 1) return PAD_LEFT + plotWidth / 2;
+      return PAD_LEFT + (i / (points.length - 1)) * plotWidth;
     });
     const yPositions = values.map((v) => {
       const t = (v - min) / range;
-      return PAD_TOP + (1 - t) * PLOT_HEIGHT;
+      return PAD_TOP + (1 - t) * plotHeight;
     });
 
     const gridValues: number[] = [];
@@ -127,7 +132,7 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
     }
 
     return { xPositions, yPositions, gridValues, xTickIndices, prFlags };
-  }, [points, metric]);
+  }, [points, metric, plotWidth, plotHeight]);
 
   if (points.length === 0) {
     return (
@@ -146,24 +151,24 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
   return (
     <View style={styles.wrap}>
       <Text style={styles.axisLabel}>{METRIC_LABEL[metric]}</Text>
-      <Svg width="100%" height={VIEW_HEIGHT} viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}>
+      <Svg width="100%" height={VIEW_HEIGHT} viewBox={`0 0 ${viewWidth} ${VIEW_HEIGHT}`}>
         <Rect
           x={PAD_LEFT}
           y={PAD_TOP}
-          width={PLOT_WIDTH}
-          height={PLOT_HEIGHT}
+          width={plotWidth}
+          height={plotHeight}
           fill="transparent"
           stroke={colors.border}
           strokeWidth={1}
         />
         {gridValues.map((_, i) => {
           const t = i / (GRIDLINE_COUNT - 1);
-          const y = PAD_TOP + (1 - t) * PLOT_HEIGHT;
+          const y = PAD_TOP + (1 - t) * plotHeight;
           return (
             <Line
               key={`grid-${i}`}
               x1={PAD_LEFT}
-              x2={PAD_LEFT + PLOT_WIDTH}
+              x2={PAD_LEFT + plotWidth}
               y1={y}
               y2={y}
               stroke={colors.borderSubtle}
@@ -173,13 +178,13 @@ export function ProgressionChart({ points, metric, onDotPress }: ProgressionChar
         })}
         {gridValues.map((v, i) => {
           const t = i / (GRIDLINE_COUNT - 1);
-          const y = PAD_TOP + (1 - t) * PLOT_HEIGHT;
+          const y = PAD_TOP + (1 - t) * plotHeight;
           return (
             <SvgText
               key={`ylabel-${i}`}
               x={PAD_LEFT - 6}
               y={y + 3}
-              fontSize={9}
+              fontSize={10}
               fill={colors.textTertiary}
               textAnchor="end"
             >
@@ -241,7 +246,7 @@ function ChartDot({ cx, cy, isPr, tickLabel, showTickLabel, onPress }: ChartDotP
         <SvgText
           x={cx}
           y={VIEW_HEIGHT - 6}
-          fontSize={9}
+          fontSize={10}
           fill={colors.textTertiary}
           textAnchor="middle"
         >
